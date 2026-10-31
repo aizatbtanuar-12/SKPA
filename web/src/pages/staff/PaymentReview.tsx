@@ -63,7 +63,16 @@ export default function PaymentReview() {
 function Review({ p, onClose, onDone }: { p: Row; onClose: () => void; onDone: () => void }) {
   const [url, setUrl] = useState<string | null>(null)
   const [note, setNote] = useState('')
+  const [dupes, setDupes] = useState<{ id: number; status: string; families: { family_code: string } | null }[]>([])
   const { busy, run } = useAction()
+
+  // Same bank reference already used on another payment? (re-used / shared receipt)
+  useEffect(() => {
+    const ref = p.reference?.replace(/\s+/g, '').toUpperCase()
+    if (!ref || ref.length < 6) return
+    supabase.from('fee_payments').select('id,status,families(family_code)').eq('reference', ref).neq('id', p.id)
+      .then(({ data }) => setDupes((data as unknown as typeof dupes) ?? []))
+  }, [p.id, p.reference])
 
   useEffect(() => {
     if (!p.proof_path) return
@@ -80,7 +89,15 @@ function Review({ p, onClose, onDone }: { p: Row; onClose: () => void; onDone: (
           : isPdf ? <a className="btn" href={url} target="_blank" rel="noreferrer">Buka PDF bukti bayaran</a>
           : <a href={url} target="_blank" rel="noreferrer"><img src={url} alt="Bukti bayaran" /></a>}
       </div>
-      <p className="small">Rujukan: {p.reference || '-'} · Dihantar {dateTime(p.submitted_at)}</p>
+      <p className="small">No. rujukan: <b className="mono">{p.reference || '-'}</b> · Dihantar {dateTime(p.submitted_at)}</p>
+      <p className="muted small">Pastikan no. rujukan dan jumlah sepadan dengan penyata bank PIBG sebelum meluluskan.</p>
+      {dupes.length > 0 && (
+        <div className="alert err small">
+          ⚠ No. rujukan ini telah digunakan untuk {dupes.length} bayaran lain:{' '}
+          {dupes.map((d) => `${d.families?.family_code ?? '?'} (${payLabel[d.status].toLowerCase()})`).join(', ')}.
+          Kemungkinan resit yang sama dimuat naik dua kali.
+        </div>
+      )}
       <Field label="Catatan (wajib jika menolak)">
         <input value={note} onChange={(e) => setNote(e.target.value)} placeholder="cth: Jumlah tidak sepadan dengan penyata bank" />
       </Field>

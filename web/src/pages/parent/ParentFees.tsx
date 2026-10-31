@@ -4,6 +4,7 @@ import { supabase, check } from '../../lib/supabase'
 import { useAuth } from '../../lib/auth'
 import { PageHead } from '../../components/Layout'
 import { Badge, Card, Empty, Field, Stat, useAction } from '../../components/ui'
+import { readReceipt, type ReceiptInfo } from '../../lib/receiptOcr'
 import { dateTime, feeStatusLabel, feeStatusTone, payLabel, payTone, rm } from '../../lib/util'
 import type { FeeStatus } from '../Dashboard'
 
@@ -37,7 +38,24 @@ export default function ParentFees() {
   const [amount, setAmount] = useState('')
   const [reference, setReference] = useState('')
   const [file, setFile] = useState<File | null>(null)
+  const [ocr, setOcr] = useState<{ state: 'idle' | 'reading' | 'done' | 'failed'; pct: number; info?: ReceiptInfo }>({ state: 'idle', pct: 0 })
   const { busy, run } = useAction()
+
+  // Read the receipt image on the device and pre-fill reference + amount for the parent to confirm
+  async function onPick(f: File | null) {
+    setFile(f)
+    setOcr({ state: 'idle', pct: 0 })
+    if (!f || !f.type.startsWith('image/')) return
+    setOcr({ state: 'reading', pct: 0 })
+    try {
+      const info = await readReceipt(f, (pct) => setOcr((o) => (o.state === 'reading' ? { ...o, pct } : o)))
+      setOcr({ state: 'done', pct: 100, info })
+      if (info.reference) setReference(info.reference)
+      if (info.amount) setAmount(String(info.amount))
+    } catch {
+      setOcr({ state: 'failed', pct: 0 })
+    }
+  }
 
   const load = useCallback(async () => {
     if (!familyId) return
@@ -65,10 +83,10 @@ export default function ParentFees() {
       if (up.error) throw new Error('Gagal memuat naik: ' + up.error.message)
       check(await supabase.from('fee_payments').insert({
         family_id: familyId, year: settings!.current_year, amount: Number(amount),
-        method: 'pindahan', reference: reference.trim() || null, proof_path: path, submitted_by: profile!.id,
+        method: 'pindahan', reference: reference.replace(/\s+/g, '').toUpperCase() || null, proof_path: path, submitted_by: profile!.id,
       }))
     }, 'Bukti bayaran dihantar. Bendahari akan menyemak dan mengeluarkan resit.')
-    if (ok) { setFile(null); setReference(''); load() }
+    if (ok) { setFile(null); setReference(''); setOcr({ state: 'idle', pct: 0 }); load() }
   }
 
   if (!familyId) {
@@ -111,16 +129,41 @@ export default function ParentFees() {
           </Card>
           <Card title="2. Muat naik bukti bayaran">
             <form className="form" onSubmit={submit}>
-              <Field label="Jumlah dibayar (RM)">
-                <input required type="number" min="1" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} />
+              <Field label="Bukti bayaran (gambar atau PDF, maks 5MB)" hint="Tangkapan skrin resit bank. No. rujukan dan jumlah akan dibaca secara automatik.">
+                <input required type="file" accept="image/*,application/pdf" onChange={(e) => onPick(e.target.files?.[0] ?? null)} />
               </Field>
-              <Field label="No. rujukan transaksi (pilihan)">
-                <input value={reference} onChange={(e) => setReference(e.target.value)} />
-              </Field>
-              <Field label="Bukti bayaran (gambar atau PDF, maks 5MB)">
-                <input required type="file" accept="image/*,application/pdf" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
-              </Field>
-              <button className="btn primary" disabled={busy}>{busy ? 'Memuat naik…' : 'Hantar'}</button>
+              {ocr.state === 'reading' && (
+                <div className="ocr-box">
+                  <span className="small">Membaca resit… {ocr.pct}%</span>
+                  <div className="progress thin"><div style={{ width: `${ocr.pct}%` }} /></div>
+                </div>
+              )}
+              {ocr.state === 'done' && ocr.info && (
+                <div className="ocr-box">
+                  {ocr.info.reference || ocr.info.amount
+                    ? <span className="small">✓ Maklumat dibaca daripada resit. <b>Sila semak dan betulkan jika perlu</b> (huruf O dan nombor 0 kadangkala tertukar).</span>
+                    : <span className="small">Tidak dapat membaca no. rujukan daripada gambar ini. Sila taip secara manual.</span>}
+                  {ocr.info.familyCode && fee && ocr.info.familyCode !== fee.family_code && (
+                    <div className="alert err small">Kod keluarga pada resit ({ocr.info.familyCode}) berbeza daripada kod keluarga anda ({fee.family_code}). Pastikan anda memuat naik resit yang betul.</div>
+                  )}
+                  {ocr.info.familyCode && fee && ocr.info.familyCode === fee.family_code && (
+                    <span className="small"> Kod keluarga {fee.family_code} dijumpai pada resit. ✓</span>
+                  )}
+                  {ocr.info.amount != null && fee && ocr.info.amount < Math.max(0, fee.fee_due - fee.paid) && (
+                    <div className="alert err small">Jumlah pada resit ({rm(ocr.info.amount)}) kurang daripada baki yuran ({rm(Math.max(0, fee.fee_due - fee.paid))}).</div>
+                  )}
+                </div>
+              )}
+              {ocr.state === 'failed' && <p className="muted small">Bacaan automatik tidak berjaya. Sila isi no. rujukan secara manual.</p>}
+              <div className="row gap wrap">
+                <Field label="Jumlah dibayar (RM)">
+                  <input required type="number" min="1" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} />
+                </Field>
+                <Field label="No. rujukan transaksi">
+                  <input required value={reference} onChange={(e) => setReference(e.target.value)} placeholder={ocr.state === 'reading' ? 'Membaca…' : ''} className="mono" />
+                </Field>
+              </div>
+              <button className="btn primary" disabled={busy || ocr.state === 'reading'}>{busy ? 'Memuat naik…' : 'Hantar'}</button>
             </form>
           </Card>
         </div>

@@ -188,7 +188,7 @@ export default function Agm() {
 }
 
 function MeetingModal({ onClose, onDone }: { onClose: () => void; onDone: (id: number) => void }) {
-  const [f, setF] = useState({ title: `Mesyuarat Agung PIBG Kali Ke-`, meeting_date: '', venue: 'Dewan SK Puncak Alam', quorum: '' })
+  const [f, setF] = useState({ title: '', meeting_date: '', venue: 'Dewan SK Puncak Alam', quorum: '' })
   const { busy, run } = useAction()
   const submit = (e: FormEvent) => { e.preventDefault(); run(async () => {
     const res = await supabase.from('agm_meetings').insert({
@@ -200,7 +200,7 @@ function MeetingModal({ onClose, onDone }: { onClose: () => void; onDone: (id: n
   return (
     <Modal title="Mesyuarat baru" onClose={onClose}>
       <form className="form" onSubmit={submit}>
-        <Field label="Tajuk"><input required value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} /></Field>
+        <Field label="Tajuk"><input required value={f.title} onChange={(e) => setF({ ...f, title: e.target.value })} placeholder="cth: Mesyuarat Agung PIBG Kali Ke-15" /></Field>
         <div className="row gap">
           <Field label="Tarikh & masa"><input type="datetime-local" value={f.meeting_date} onChange={(e) => setF({ ...f, meeting_date: e.target.value })} /></Field>
           <Field label="Korum (bil. keluarga)" hint="Rujuk perlembagaan PIBG."><input type="number" min="0" value={f.quorum} onChange={(e) => setF({ ...f, quorum: e.target.value })} /></Field>

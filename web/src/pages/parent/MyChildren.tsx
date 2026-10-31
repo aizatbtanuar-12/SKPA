@@ -69,7 +69,7 @@ export default function MyChildren() {
             <ul className="list">
               {kids.map((k) => (
                 <li key={k.id}>
-                  <div><strong>{k.full_name}</strong><div className="muted small">MyKid {maskIC(k.ic_no)}</div></div>
+                  <div><strong>{k.full_name}</strong>{k.ic_no && <div className="muted small">MyKid {maskIC(k.ic_no)}</div>}</div>
                   <Badge tone="blue">{k.classes?.name ?? '-'}</Badge>
                 </li>
               ))}
