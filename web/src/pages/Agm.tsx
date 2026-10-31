@@ -110,7 +110,7 @@ export default function Agm() {
                   sub={stats.quorum ? (stats.families_present >= stats.quorum ? 'Korum dicapai' : 'Belum cukup korum') : undefined} />
               </div>
             )}
-            {r.isParent && (
+            {r.hasFamily && (
               !familyId ? <p className="muted">Akaun anda perlu dipautkan kepada keluarga murid untuk hadir dan mengundi.</p>
               : present ? <div className="alert ok">Kehadiran keluarga anda telah direkod.</div>
               : meeting.status === 'dibuka' ? <button className="btn primary" disabled={busy} onClick={checkIn}>Daftar kehadiran saya</button>
@@ -142,7 +142,7 @@ export default function Agm() {
                       </div>
                       {m.description && <p className="small">{m.description}</p>}
 
-                      {r.isParent && m.status === 'dibuka' && (
+                      {r.hasFamily && m.status === 'dibuka' && (
                         myVotes[m.id] ? <div className="alert ok">Undian keluarga anda: <b>{myVotes[m.id]}</b></div>
                         : !present ? <p className="muted small">Daftar kehadiran dahulu untuk mengundi.</p>
                         : <div className="row gap wrap">{m.options.map((o) => (

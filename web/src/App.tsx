@@ -70,8 +70,8 @@ function Routed() {
         <Route path="/resit-sumbangan/:id" element={<DonationReceipt />} />
         <Route path="/kempen" element={<Guard ok={r.isStaff}><Campaigns /></Guard>} />
         <Route path="/kempen/:id" element={<Guard ok={r.isStaff}><CampaignManage /></Guard>} />
-        <Route path="/anak" element={<Guard ok={r.isParent}><MyChildren /></Guard>} />
-        <Route path="/yuran" element={<Guard ok={r.isParent}><ParentFees /></Guard>} />
+        <Route path="/anak" element={<Guard ok={r.hasFamily}><MyChildren /></Guard>} />
+        <Route path="/yuran" element={<Guard ok={r.hasFamily}><ParentFees /></Guard>} />
         <Route path="/pengesahan" element={<Guard ok={r.canVerify}><Verify /></Guard>} />
         <Route path="/kelas" element={<Guard ok={r.isTeacher}><MyClass /></Guard>} />
         <Route path="/rekod" element={<Guard ok={r.isStaff}><Records /></Guard>} />

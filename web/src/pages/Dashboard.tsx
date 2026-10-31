@@ -2,10 +2,11 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth, useRole } from '../lib/auth'
-import { roleLabel } from '../lib/util'
+import { feeStatusLabel, rm, roleLabel } from '../lib/util'
+import { useFamily } from '../lib/useFamily'
 import CampaignCard from '../components/CampaignCard'
 import { DanaCard, MemoTile, MEMO_SELECT, type MemoLite } from '../components/HomeParts'
-import { Live, QuickTiles, type QuickTile, firstName, initials, todayLong, useIsMobile } from '../components/pui'
+import { Live, PBadge, QuickTiles, type QuickTile, firstName, initials, todayLong, useIsMobile } from '../components/pui'
 import { loadProgress, type Campaign, type Progress } from '../lib/donations'
 
 export interface FundSummary {
@@ -33,6 +34,7 @@ export default function Dashboard() {
   const [drives, setDrives] = useState<Campaign[]>([])
   const [prog, setProg] = useState<Record<number, Progress>>({})
   const [loaded, setLoaded] = useState(false)
+  const fam = useFamily()
 
   useEffect(() => {
     supabase.from('campaigns').select('*').eq('status', 'aktif').order('created_at', { ascending: false }).limit(2)
@@ -106,6 +108,37 @@ export default function Dashboard() {
         { to: '/agm', img: '/icons/mesyuarat.png', label: 'Mesyuarat', tint: 't-green' },
       ]
 
+  // committee / chairman / admin are parents too
+  const feeTone = { lunas: 'green', menunggu: 'amber', belum: 'red' } as const
+  const famStatus = fam.fee?.status ?? 'belum'
+  const familyCard = r.hasFamily && (
+    <div className="pcard family-card">
+      <div className="pcard-head">
+        <h2>Keluarga saya</h2>
+        {fam.fee && <span className="row gap" style={{ alignItems: 'center' }}><span className="mono small" translate="no">{fam.fee.family_code}</span><PBadge tone={feeTone[famStatus]}>{feeStatusLabel[famStatus]}</PBadge></span>}
+      </div>
+      {fam.familyId && fam.fee ? (
+        <div className="family-row">
+          <div>
+            <Live as="b">{famStatus === 'lunas' ? `Yuran ${fam.fee.year} telah dilunaskan` : `Yuran ${fam.fee.year}: ${rm(Math.max(0, Number(fam.fee.fee_due) - Number(fam.fee.paid)))}`}</Live>
+            <div className="chips">{fam.kids.map((k) => <span key={k.id} className="pchip" translate="no">{firstName(k.full_name)} · {k.className}</span>)}</div>
+          </div>
+          <div className="row gap wrap">
+            <Link className="pbtn sec small" to="/anak">Anak saya</Link>
+            {famStatus === 'lunas' && fam.latestReceipt
+              ? <Link className="pbtn green small" to={`/resit/${fam.latestReceipt.id}`}>Resit {fam.latestReceipt.receipt_no}</Link>
+              : famStatus === 'belum' && <Link className="pbtn small" to="/yuran" state={{ tab: 'bayar' }}>Bayar yuran →</Link>}
+          </div>
+        </div>
+      ) : (
+        <div className="family-row">
+          <span className="muted">Anda juga ibu bapa murid sekolah ini? Daftarkan anak anda untuk membayar yuran, menyumbang dan mengundi sebagai keluarga.</span>
+          <Link className="pbtn small" to="/anak" state={{ tab: 'tambah' }}>Tambah anak →</Link>
+        </div>
+      )}
+    </div>
+  )
+
   const drivesBlock = drives.length > 0 && (
     <div className={mobile ? 'home-sec' : ''} style={mobile ? undefined : { marginTop: 20 }}>
       <div className="sec-head"><h2>Kutipan dana</h2><Link to={r.isStaff ? '/kempen' : '/sumbangan'}>Semua →</Link></div>
@@ -130,6 +163,7 @@ export default function Dashboard() {
         </div>
         {todoCard}
         <QuickTiles tiles={tiles} mobile />
+        {familyCard && <div className="home-sec">{familyCard}</div>}
         {memos.length > 0 && (
           <div className="home-sec">
             <div className="sec-head"><h2>Memo terkini</h2><Link to="/memo">Semua →</Link></div>
@@ -159,6 +193,7 @@ export default function Dashboard() {
         {todoCard}
       </div>
       <QuickTiles tiles={tiles} mobile={false} />
+      {familyCard && <div style={{ marginBottom: 20 }}>{familyCard}</div>}
       <div className="pgrid eq">
         <div className="pcard">
           <div className="pcard-head"><h2>Memo terkini</h2><Link to="/memo">Semua memo →</Link></div>

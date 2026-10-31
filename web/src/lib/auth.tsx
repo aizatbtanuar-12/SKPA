@@ -79,13 +79,15 @@ export const useAuth = () => useContext(Ctx)
 export function useRole() {
   const { profile, classes } = useAuth()
   const role = profile?.role ?? 'parent'
-  const isStaff = role === 'admin' || role === 'pibg'
+  const isStaff = role === 'admin' || role === 'pengerusi' || role === 'pibg'
   const isTeacher = role === 'guru'
   const myClasses = classes.filter((c) => c.class_teacher_id === profile?.id)
   return {
     role, isStaff, isTeacher, myClasses,
     isAdmin: role === 'admin',
     isParent: role === 'parent',
+    /** parent functions (Anak Saya, Yuran, vote as a family): parents, and the PIBG chairman / committee / admin who are parents too */
+    hasFamily: role === 'parent' || isStaff,
     isSchoolStaff: role !== 'parent',
     canPostMemo: isStaff || role === 'panitia' || (isTeacher && myClasses.length > 0),
     canVerify: isStaff || myClasses.length > 0,

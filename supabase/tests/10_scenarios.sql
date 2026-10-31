@@ -23,7 +23,7 @@ select import_students('[
  {"nama_murid":"Adam bin Ali","ic_murid":"150505-10-0001","kelas":"4 Amanah","nama_bapa":"Ali bin Abu","ic_bapa":"800101-10-1111","tel_bapa":"012-1111111","nama_ibu":"Siti binti Omar","ic_ibu":"820202102222"},
  {"nama_murid":"Aisyah binti Ali","ic_murid":"170707-10-0002","kelas":"2 bestari","nama_ibu":"Siti binti Omar","ic_ibu":"820202-10-2222"},
  {"nama_murid":"Chong Wei","ic_murid":"160606-10-0003","kelas":"4 Amanah","nama_bapa":"Chong Ah Kow","ic_bapa":"780808-10-3333"},
- {"nama_murid":"Dewi","kelas":"2 Bestari","nama_ibu":"Kamala"},
+ {"nama_murid":"Dewi","ic_murid":"170303-10-0004","kelas":"2 Bestari","nama_ibu":"Kamala","ic_ibu":"850505-10-4444"},
  {"nama_murid":"","kelas":"1 A"}
 ]'::jsonb);
 reset role;
@@ -48,8 +48,8 @@ set role authenticated;
 select count(*) as students_visible_before_link from students;   -- expect 0
 insert into child_claims (user_id, child_name, child_ic, class_id, relation)
   values (auth.uid(), 'Adam Ali', '150505100001', (select id from classes where name='4 AMANAH'), 'bapa');
-insert into child_claims (user_id, child_name, class_id, relation)
-  values (auth.uid(), 'Yusuf bin Ali', (select id from classes where name='2 BESTARI'), 'bapa');
+insert into child_claims (user_id, child_name, child_ic, class_id, relation)
+  values (auth.uid(), 'Yusuf bin Ali', '180808100005', (select id from classes where name='2 BESTARI'), 'bapa');
 -- parent cannot self-approve
 do $$ begin
   update child_claims set status='dipadan' where user_id=auth.uid();
@@ -111,8 +111,8 @@ select status from family_fee_status;                            -- menunggu
 reset role;
 
 -- ===== 7. Imposter with same IC cannot hijack =====
-insert into child_claims (user_id, child_name, class_id, relation)
-  values ('00000000-0000-0000-0000-0000000000e3','Adam',(select id from classes where name='4 AMANAH'),'bapa');
+insert into child_claims (user_id, child_name, child_ic, class_id, relation)
+  values ('00000000-0000-0000-0000-0000000000e3','Adam','150505100001',(select id from classes where name='4 AMANAH'),'bapa');
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-00000000000c',false);
 set role authenticated;
 do $$ begin

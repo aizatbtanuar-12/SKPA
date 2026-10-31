@@ -88,7 +88,7 @@ export default function Import() {
         actions={<button className="btn ghost" onClick={template}>Muat turun templat</button>} />
       <Card title="1. Pilih fail CSV">
         <input type="file" accept=".csv,text/csv" onChange={(e) => e.target.files?.[0] && onFile(e.target.files[0])} />
-        <p className="muted small">Dalam Excel: Fail → Simpan Sebagai → <b>CSV UTF-8</b>. No. KP boleh dengan atau tanpa sengkang.
+        <p className="muted small">Dalam Excel: Fail → Simpan Sebagai → <b>CSV UTF-8</b>. No. KP boleh dengan atau tanpa sengkang. <b>No. MyKid murid dan sekurang-kurangnya satu No. KP ibu / bapa / penjaga wajib diisi</b>; baris tanpanya akan dilangkau.
           Kelas yang belum wujud akan dicipta secara automatik.</p>
       </Card>
 
@@ -129,8 +129,8 @@ export default function Import() {
           </div>
           {result.amaran.length > 0 && (
             <>
-              <p className="small"><b>{result.amaran.length} amaran.</b> Murid tanpa No. KP ibu/bapa tidak dapat dikumpulkan sebagai adik-beradik secara automatik.
-                Gabungkan mereka secara manual di halaman Rekod jika perlu.</p>
+              <p className="small"><b>{result.amaran.length} amaran.</b> Baris tanpa No. KP dilangkau, dan murid yang sudah berdaftar di bawah keluarga lain tidak dipautkan semula.
+                Betulkan di halaman Rekod jika perlu.</p>
               <ul className="warn-list">{result.amaran.slice(0, 100).map((w, i) => <li key={i}>{w}</li>)}</ul>
             </>
           )}
