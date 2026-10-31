@@ -5,6 +5,7 @@ import { roleLabel } from '../lib/util'
 import { Live, initials, useIsMobile } from './pui'
 import { useUnreadMemos } from './useUnreadMemos'
 import ErrorBoundary from './ErrorBoundary'
+import LangSwitch from './LangSwitch'
 
 interface NavItem { to: string; label: string; icon: string; show: boolean; count?: number }
 interface Tab { to: string; label: string; icon: string; match: string[] }
@@ -143,6 +144,7 @@ export default function Layout({ children }: { children: ReactNode }) {
                   </div>
                 </div>
               ))}
+              <div className="menu-lang"><span>Bahasa</span><LangSwitch /></div>
               <button className="pbtn sec" style={{ marginTop: 18 }} onClick={signOut}>Log keluar</button>
             </div>
           </div>
@@ -166,12 +168,13 @@ export default function Layout({ children }: { children: ReactNode }) {
             </div>
           ))}
         </nav>
+        <div className="pside-lang"><LangSwitch dark /></div>
         <div className="pside-foot">
           <Link to="/profil">
             <span className="avatar" aria-hidden="true">{initials(profile?.full_name)}</span>
             <div style={{ minWidth: 0 }}><strong>{profile?.full_name || 'Pengguna'}</strong><span>{r.isParent ? 'Ibu Bapa / Penjaga' : roleLabel[r.role]}</span></div>
           </Link>
-          <button onClick={signOut}>Keluar</button>
+          <button onClick={signOut}>Log keluar</button>
         </div>
       </aside>
       <main className="pmain"><div className="pcontent up" key={loc.pathname}><ErrorBoundary resetKey={loc.pathname}>{children}</ErrorBoundary></div></main>

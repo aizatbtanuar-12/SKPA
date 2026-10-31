@@ -25,6 +25,8 @@ export interface Profile {
   spouse_ic?: string | null
   spouse_phone?: string | null
   no_spouse?: boolean | null
+  /** display language (migration 012) */
+  lang?: 'ms' | 'en' | null
 }
 
 export interface Settings {

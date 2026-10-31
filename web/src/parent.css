@@ -586,3 +586,18 @@ th.num .th-sort { flex-direction: row-reverse; }
 .tick.on { background: var(--brand); border-color: var(--brand); }
 .tick.fixed { background: var(--track); border-color: var(--track); color: var(--muted); cursor: default; }
 .tick:disabled { opacity: .5; }
+
+/* language switch */
+.langsw { display: inline-flex; background: var(--seg, #ebe6d8); border-radius: 12px; padding: 3px; gap: 2px; }
+.langsw button { border: 0; background: transparent; border-radius: 9px; padding: 6px 14px; font: inherit; font-size: 13px; font-weight: 800; color: var(--muted); cursor: pointer; }
+.langsw button.on { background: #fff; color: var(--ink); box-shadow: 0 1px 3px rgba(20,49,94,.14); }
+.langsw.dark { background: rgba(255,255,255,.1); }
+.langsw.dark button { color: rgba(255,255,255,.7); padding: 4px 12px; font-size: 12px; }
+.langsw.dark button.on { background: rgba(255,255,255,.9); color: var(--brand-dark); }
+.pside-lang { padding: 0 24px; position: relative; z-index: 1; }
+.menu-lang { display: flex; align-items: center; justify-content: space-between; margin-top: 18px; font-size: 13px; font-weight: 700; color: var(--muted); }
+.auth-lang { display: flex; justify-content: flex-end; margin-bottom: 12px; }
+.auth-lang .langsw { background: #ebe6d8; }
+
+/* fields side by side: inputs line up even when one label wraps onto two lines */
+.row:has(> .field):not(:has(> .field small)) { align-items: flex-end; }

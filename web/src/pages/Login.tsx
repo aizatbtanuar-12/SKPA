@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { supabase } from '../lib/supabase'
 import { normIC, validIC, errMsg } from '../lib/util'
 import { Field } from '../components/ui'
+import LangSwitch from '../components/LangSwitch'
 
 type Mode = 'login' | 'daftar' | 'lupa'
 
@@ -73,6 +74,7 @@ export default function Login() {
         </ul>
       </div>
       <form className="auth-card" onSubmit={submit}>
+        <div className="auth-lang"><LangSwitch /></div>
         <div className="tabs">
           <button type="button" className={mode === 'login' ? 'on' : ''} onClick={() => setMode('login')}>Log Masuk</button>
           <button type="button" className={mode === 'daftar' ? 'on' : ''} onClick={() => setMode('daftar')}>Daftar Akaun</button>

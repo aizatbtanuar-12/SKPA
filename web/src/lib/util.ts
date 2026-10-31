@@ -1,13 +1,14 @@
+import { locale } from './i18n'
 import type { Role } from './supabase'
 
 export const rm = (n: number | string | null | undefined) =>
   'RM ' + Number(n ?? 0).toLocaleString('ms-MY', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
 export const date = (d: string | null | undefined) =>
-  d ? new Date(d).toLocaleDateString('ms-MY', { day: 'numeric', month: 'short', year: 'numeric' }) : '-'
+  d ? new Date(d).toLocaleDateString(locale(), { day: 'numeric', month: 'short', year: 'numeric' }) : '-'
 
 export const dateTime = (d: string | null | undefined) =>
-  d ? new Date(d).toLocaleString('ms-MY', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-'
+  d ? new Date(d).toLocaleString(locale(), { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-'
 
 export const normIC = (v: string) => v.replace(/\D/g, '')
 export const maskIC = (v: string | null | undefined) => (v ? '••••••-••-' + v.slice(-4) : '-')

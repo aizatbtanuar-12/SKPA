@@ -3,13 +3,14 @@ import { supabase, check } from '../../lib/supabase'
 import { useAuth } from '../../lib/auth'
 import { useAction } from '../../components/ui'
 import { PageHead, PBadge, useIsMobile } from '../../components/pui'
+import { locale } from '../../lib/i18n'
 
 interface Meeting { id: number; title: string; meeting_date: string | null; venue: string | null; status: string; quorum: number }
 interface Motion { id: number; title: string; description: string | null; options: string[]; status: string }
 interface Result { choice: string; votes: number }
 
 const when = (d: string | null) => d
-  ? new Date(d).toLocaleString('ms-MY', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit' })
+  ? new Date(d).toLocaleString(locale(), { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit' })
   : 'Tarikh akan dimaklumkan'
 
 export default function ParentAgm() {

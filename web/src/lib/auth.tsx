@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useState, type React
 import type { Session } from '@supabase/supabase-js'
 import { supabase, type Profile, type Settings, type ClassRow } from './supabase'
 import type { Perm } from './perms'
+import { getLang, setLang } from './i18n'
 
 interface AuthState {
   session: Session | null
@@ -51,6 +52,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (firstErr) throw new Error(firstErr.message)
       if (!p.data) throw new Error('Profil pengguna tidak dijumpai. Jalankan supabase/migrations/003_profile_repair.sql dalam Supabase SQL Editor.')
       setProfile(p.data as Profile)
+      // the language saved on the profile wins over this browser's last choice
+      const pl = (p.data as Profile).lang
+      if (pl && pl !== getLang()) setLang(pl)
+      // first sign-in after choosing a language on the sign-in page: remember it on the profile
+      else if (!pl && getLang() === 'en') supabase.from('profiles').update({ lang: 'en' }).eq('id', s.user.id).then(() => {})
       setSettings((st.data as Settings) ?? null)
       setClasses((cl.data as ClassRow[]) ?? [])
       setFamilyId((fam.data as number | null) ?? null)
