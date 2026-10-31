@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { supabase, check } from '../lib/supabase'
-import { useAuth } from '../lib/auth'
+import { useAuth, useRole } from '../lib/auth'
+import SpouseCard from '../components/SpouseCard'
 import { PageHead } from '../components/Layout'
 import { Card, Field, useAction } from '../components/ui'
 import { normIC, roleLabel, validIC } from '../lib/util'
@@ -9,10 +10,11 @@ export default function Profile() {
   const { profile, session, refresh } = useAuth()
   const [f, setF] = useState({ full_name: profile?.full_name ?? '', phone: profile?.phone ?? '', ic_no: profile?.ic_no ?? '' })
   const [pw, setPw] = useState('')
+  const { hasFamily } = useRole()
   const { busy, run } = useAction()
 
   const save = (e: FormEvent) => { e.preventDefault(); run(async () => {
-    if (f.ic_no && !validIC(f.ic_no)) throw new Error('No. KP mesti 12 digit.')
+    if (!validIC(f.ic_no)) throw new Error('No. Kad Pengenalan wajib diisi (12 digit).')
     check(await supabase.from('profiles').update({ full_name: f.full_name.trim(), phone: f.phone.trim(), ic_no: normIC(f.ic_no) || null }).eq('id', profile!.id))
     await refresh()
   }, 'Profil dikemas kini.') }
@@ -32,7 +34,7 @@ export default function Profile() {
           <form className="form" onSubmit={save}>
             <Field label="Nama penuh"><input required value={f.full_name} onChange={(e) => setF({ ...f, full_name: e.target.value })} /></Field>
             <Field label="No. Kad Pengenalan" hint="Selepas disahkan oleh guru kelas, pindaan perlu melalui pentadbir.">
-              <input value={f.ic_no} onChange={(e) => setF({ ...f, ic_no: e.target.value })} inputMode="numeric" />
+              <input required value={f.ic_no} onChange={(e) => setF({ ...f, ic_no: e.target.value })} inputMode="numeric" />
             </Field>
             <Field label="Telefon"><input value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} /></Field>
             <button className="btn primary" disabled={busy}>Simpan</button>
@@ -45,6 +47,7 @@ export default function Profile() {
           </form>
         </Card>
       </div>
+      {hasFamily && <div className="grid2"><SpouseCard /></div>}
     </>
   )
 }

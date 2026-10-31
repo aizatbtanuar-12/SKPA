@@ -102,8 +102,8 @@ function StudentModal({ student, onClose, onSaved }: { student: Student | null; 
   }, [student])
 
   const save = (e: FormEvent) => { e.preventDefault(); run(async () => {
-    if (s.ic_no && !validIC(s.ic_no)) throw new Error('No. MyKid mesti 12 digit.')
-    const body = { full_name: s.full_name.trim(), ic_no: normIC(s.ic_no) || null, class_id: s.class_id ? Number(s.class_id) : null, status: s.status }
+    if (!validIC(s.ic_no)) throw new Error('No. MyKid murid wajib diisi (12 digit).')
+    const body = { full_name: s.full_name.trim(), ic_no: normIC(s.ic_no), class_id: s.class_id ? Number(s.class_id) : null, status: s.status }
     if (student) check(await supabase.from('students').update(body).eq('id', student.id))
     else check(await supabase.from('students').insert({ ...body, source: 'manual', created_by: profile!.id }))
     onSaved()
@@ -112,14 +112,14 @@ function StudentModal({ student, onClose, onSaved }: { student: Student | null; 
   const addGuardian = (e: FormEvent) => { e.preventDefault(); run(async () => {
     if (!student) return
     const ic = normIC(g.ic_no)
-    if (ic && !validIC(ic)) throw new Error('No. KP mesti 12 digit.')
+    if (!validIC(ic)) throw new Error('No. KP ibu bapa / penjaga wajib diisi (12 digit).')
     let gid: number | null = null
     if (ic) {
       const { data } = await supabase.from('guardians').select('id').eq('ic_no', ic).maybeSingle()
       gid = (data as { id: number } | null)?.id ?? null
     }
     if (!gid) {
-      const ins = await supabase.from('guardians').insert({ full_name: g.full_name.trim(), ic_no: ic || null, phone: g.phone.trim() || null }).select('id').single()
+      const ins = await supabase.from('guardians').insert({ full_name: g.full_name.trim(), ic_no: ic, phone: g.phone.trim() || null }).select('id').single()
       gid = (check(ins) as { id: number }).id
     }
     check(await supabase.from('student_guardians').insert({ student_id: student.id, guardian_id: gid, relation: g.relation }))
@@ -148,7 +148,7 @@ function StudentModal({ student, onClose, onSaved }: { student: Student | null; 
       <form className="form" onSubmit={save}>
         <div className="row gap wrap">
           <Field label="Nama penuh"><input required value={s.full_name} onChange={(e) => setS({ ...s, full_name: e.target.value })} /></Field>
-          <Field label="No. MyKid"><input value={s.ic_no} onChange={(e) => setS({ ...s, ic_no: e.target.value })} inputMode="numeric" /></Field>
+          <Field label="No. MyKid"><input required value={s.ic_no} onChange={(e) => setS({ ...s, ic_no: e.target.value })} inputMode="numeric" /></Field>
           <Field label="Kelas">
             <select value={s.class_id} onChange={(e) => setS({ ...s, class_id: e.target.value })}>
               <option value="">-</option>{classes.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -179,7 +179,7 @@ function StudentModal({ student, onClose, onSaved }: { student: Student | null; 
           </ul>
           <form className="row gap wrap end" onSubmit={addGuardian}>
             <Field label="Nama"><input required value={g.full_name} onChange={(e) => setG({ ...g, full_name: e.target.value })} /></Field>
-            <Field label="No. KP"><input value={g.ic_no} onChange={(e) => setG({ ...g, ic_no: e.target.value })} inputMode="numeric" /></Field>
+            <Field label="No. KP"><input required value={g.ic_no} onChange={(e) => setG({ ...g, ic_no: e.target.value })} inputMode="numeric" /></Field>
             <Field label="Telefon"><input value={g.phone} onChange={(e) => setG({ ...g, phone: e.target.value })} /></Field>
             <Field label="Hubungan">
               <select value={g.relation} onChange={(e) => setG({ ...g, relation: e.target.value })}>

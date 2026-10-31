@@ -7,11 +7,12 @@ type Mode = 'login' | 'daftar' | 'lupa'
 
 export default function Login() {
   const [mode, setMode] = useState<Mode>('login')
-  const [f, setF] = useState({ email: '', password: '', full_name: '', ic_no: '', phone: '', consent: false })
+  const [f, setF] = useState({ email: '', password: '', full_name: '', ic_no: '', phone: '', consent: false,
+    relation: 'bapa', spouse_name: '', spouse_ic: '', spouse_phone: '', no_spouse: false })
   const [msg, setMsg] = useState<{ tone: 'ok' | 'err'; text: string } | null>(null)
   const [busy, setBusy] = useState(false)
-  const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement>) =>
-    setF({ ...f, [k]: e.target.type === 'checkbox' ? e.target.checked : e.target.value })
+  const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+    setF({ ...f, [k]: e.target.type === 'checkbox' ? (e.target as HTMLInputElement).checked : e.target.value })
 
   async function submit(e: FormEvent) {
     e.preventDefault()
@@ -23,13 +24,22 @@ export default function Login() {
         if (error) throw new Error(error.message === 'Invalid login credentials' ? 'E-mel atau kata laluan salah.' : error.message)
       } else if (mode === 'daftar') {
         if (!validIC(f.ic_no)) throw new Error('No. Kad Pengenalan mesti 12 digit.')
+        if (!f.no_spouse) {
+          if (!f.spouse_name.trim()) throw new Error('Sila isi nama pasangan, atau tandakan "Tiada pasangan untuk didaftarkan".')
+          if (!validIC(f.spouse_ic)) throw new Error('No. Kad Pengenalan pasangan mesti 12 digit.')
+          if (normIC(f.spouse_ic) === normIC(f.ic_no)) throw new Error('No. KP pasangan tidak boleh sama dengan No. KP anda.')
+        }
         if (f.password.length < 8) throw new Error('Kata laluan sekurang-kurangnya 8 aksara.')
         if (!f.consent) throw new Error('Sila bersetuju dengan notis privasi untuk mendaftar.')
         const { data, error } = await supabase.auth.signUp({
           email: f.email.trim(),
           password: f.password,
           options: {
-            data: { full_name: f.full_name.trim(), ic_no: normIC(f.ic_no), phone: f.phone.trim(), pdpa_consent: true },
+            data: {
+              full_name: f.full_name.trim(), ic_no: normIC(f.ic_no), phone: f.phone.trim(), pdpa_consent: true,
+              relation: f.relation, no_spouse: f.no_spouse,
+              ...(f.no_spouse ? {} : { spouse_name: f.spouse_name.trim(), spouse_ic: normIC(f.spouse_ic), spouse_phone: f.spouse_phone.trim() }),
+            },
             emailRedirectTo: window.location.origin,
           },
         })
@@ -79,6 +89,28 @@ export default function Login() {
             <Field label="No. telefon">
               <input required value={f.phone} onChange={set('phone')} inputMode="tel" placeholder="012-3456789" autoComplete="tel" />
             </Field>
+            <Field label="Saya ialah">
+              <select value={f.relation} onChange={set('relation')}>
+                <option value="bapa">Bapa</option><option value="ibu">Ibu</option><option value="penjaga">Penjaga</option>
+              </select>
+            </Field>
+            <fieldset className="spouse-box">
+              <legend>{f.relation === 'bapa' ? 'Isteri (ibu kepada anak-anak)' : f.relation === 'ibu' ? 'Suami (bapa kepada anak-anak)' : 'Pasangan / penjaga kedua'}</legend>
+              <p className="small muted">Kedua-dua ibu dan bapa akan dipautkan kepada anak-anak sebagai satu keluarga.</p>
+              {!f.no_spouse && (
+                <>
+                  <Field label="Nama penuh pasangan"><input required value={f.spouse_name} onChange={set('spouse_name')} /></Field>
+                  <Field label="No. Kad Pengenalan pasangan">
+                    <input required value={f.spouse_ic} onChange={set('spouse_ic')} inputMode="numeric" placeholder="820202-10-2222" />
+                  </Field>
+                  <Field label="No. telefon pasangan (pilihan)"><input value={f.spouse_phone} onChange={set('spouse_phone')} inputMode="tel" /></Field>
+                </>
+              )}
+              <label className="check" style={{ marginBottom: 0 }}>
+                <input type="checkbox" checked={f.no_spouse} onChange={set('no_spouse')} />
+                <span>Tiada pasangan untuk didaftarkan (ibu / bapa tunggal atau penjaga)</span>
+              </label>
+            </fieldset>
           </>
         )}
         <Field label="E-mel">

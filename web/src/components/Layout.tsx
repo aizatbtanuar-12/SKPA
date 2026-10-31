@@ -41,8 +41,8 @@ export default function Layout({ children }: { children: ReactNode }) {
     {
       title: 'Keluarga Saya',
       items: [
-        { to: '/anak', label: 'Anak Saya', icon: '☺', show: r.isParent },
-        { to: '/yuran', label: 'Yuran PIBG', icon: '◆', show: r.isParent },
+        { to: '/anak', label: 'Anak Saya', icon: '☺', show: r.hasFamily },
+        { to: '/yuran', label: 'Yuran PIBG', icon: '◆', show: r.hasFamily },
       ],
     },
     {

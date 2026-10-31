@@ -3,7 +3,8 @@ import { Link, useLocation } from 'react-router-dom'
 import { supabase, check } from '../../lib/supabase'
 import { useAuth } from '../../lib/auth'
 import { useAction } from '../../components/ui'
-import { claimLabel, date, maskIC, normIC, relationLabel } from '../../lib/util'
+import { claimLabel, date, maskIC, normIC, relationLabel, validIC } from '../../lib/util'
+import SpouseCard from '../../components/SpouseCard'
 import { PageHead, PBadge, Seg, initials, useIsMobile, useScrollTop, type PTone } from '../../components/pui'
 
 interface Claim { id: number; child_name: string; class_id: number; relation: string; status: string; review_note: string | null; created_at: string }
@@ -22,7 +23,8 @@ export default function MyChildren() {
   const [claims, setClaims] = useState<Claim[]>([])
   const [kids, setKids] = useState<Child[]>([])
   const [guardians, setGuardians] = useState<Guardian[]>([])
-  const [f, setF] = useState({ child_name: '', child_ic: '', class_id: '', relation: 'bapa' })
+  const [f, setF] = useState({ child_name: '', child_ic: '', class_id: '', relation: profile?.relation ?? 'bapa' })
+  useEffect(() => { if (profile?.relation) setF((x) => ({ ...x, relation: profile.relation! })) }, [profile?.relation])
   const { busy, run } = useAction()
   useScrollTop(tab)
 
@@ -47,8 +49,9 @@ export default function MyChildren() {
 
   const add = (e: FormEvent) => { e.preventDefault(); run(async () => {
     if (!profile?.ic_no) throw new Error('Sila lengkapkan No. Kad Pengenalan anda di halaman Profil dahulu.')
+    if (!validIC(f.child_ic)) throw new Error('No. MyKid anak wajib diisi (12 digit).')
     check(await supabase.from('child_claims').insert({
-      user_id: profile.id, child_name: f.child_name.trim(), child_ic: normIC(f.child_ic) || null,
+      user_id: profile.id, child_name: f.child_name.trim(), child_ic: normIC(f.child_ic),
       class_id: Number(f.class_id), relation: f.relation,
     }))
     setF({ ...f, child_name: '', child_ic: '' })
@@ -87,7 +90,8 @@ export default function MyChildren() {
           {mobile && <button className="pbtn" style={{ marginTop: 14 }} onClick={() => setTab('tambah')}>Tambah anak</button>}
         </div>
       )}
-      {guardians.length > 0 && <p className="muted" style={{ fontSize: 12, margin: '12px 4px 0' }}>Penjaga berdaftar: {guardians.map((g) => g.full_name).join(', ')}</p>}
+      {guardians.length > 0 && <p className="muted" style={{ fontSize: 12, margin: '12px 4px 0' }}>Ibu bapa / penjaga dalam keluarga ini: <span translate="no">{guardians.map((g) => g.full_name).join(', ')}</span></p>}
+      <div style={{ marginTop: 16 }}><SpouseCard onSaved={load} /></div>
     </div>
   )
 
@@ -102,9 +106,9 @@ export default function MyChildren() {
             <option value="">Pilih kelas</option>
             {classes.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select></label>
-        <label className="pfield"><span>No. MyKid anak (pilihan)</span>
-          <input value={f.child_ic} inputMode="numeric" onChange={(e) => setF({ ...f, child_ic: e.target.value })} />
-          <small>Membantu guru memadankan rekod dengan tepat.</small></label>
+        <label className="pfield"><span>No. MyKid anak</span>
+          <input required value={f.child_ic} inputMode="numeric" placeholder="150505-10-1234" onChange={(e) => setF({ ...f, child_ic: e.target.value })} />
+          <small>Wajib. Seorang murid hanya boleh didaftarkan di bawah satu keluarga.</small></label>
       </div>
       <div className="pfield"><span>Hubungan</span>
         <div className="toggle3" role="radiogroup" aria-label="Hubungan">
