@@ -32,6 +32,7 @@ You need a free [Supabase](https://supabase.com) account (database + login + fil
 1. Supabase → **New project**. Name: `pibg-skpa`. Region: **Southeast Asia (Singapore)**. Save the database password somewhere safe.
 2. When it's ready, open **SQL Editor** → **New query**. Paste the whole of `supabase/migrations/001_schema.sql` → **Run**.
 3. New query again → paste `supabase/migrations/002_storage.sql` → **Run**.
+4. New query again → paste `supabase/migrations/003_profile_repair.sql` → **Run**. This repairs any account registered before steps 2–3 were done, and is safe to run again any time.
 
 ### 2. Configure sign-in e-mails (important)
 Supabase's built-in e-mail sender only delivers to your own Supabase team members, and only 2 e-mails per hour. Parents would never receive their confirmation e-mail. Pick one option:
@@ -130,6 +131,7 @@ psql -d pibg_test -f supabase/tests/10_scenarios.sql   # ends with "ALL TESTS PA
 ```
 supabase/migrations/001_schema.sql   tables, family/sibling logic, functions, security rules
 supabase/migrations/002_storage.sql  private bucket for payment proofs
+supabase/migrations/003_profile_repair.sql  repairs accounts created before setup
 supabase/tests/                      scenario tests (12 scenarios)
 web/src/pages/                       one file per screen (parent/, teacher/, staff/, admin/)
 web/src/lib/                         Supabase client, auth/roles, helpers
