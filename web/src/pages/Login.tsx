@@ -53,7 +53,7 @@ export default function Login() {
   return (
     <div className="auth-wrap">
       <div className="auth-hero">
-        <div className="logo big">P</div>
+        <img className="logo big" src="/logo.png" alt="Logo PIBG SK Puncak Alam" />
         <h1>Portal PIBG<br />SK Puncak Alam</h1>
         <p>Yuran keluarga, memo sekolah, laporan dana dan Mesyuarat Agung, semua di satu tempat.</p>
         <ul>

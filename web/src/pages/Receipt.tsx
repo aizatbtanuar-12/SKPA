@@ -39,7 +39,7 @@ export default function Receipt() {
       </div>
       <article className="receipt">
         <header>
-          <div className="logo">P</div>
+          <img className="logo" src="/logo.png" alt="Logo PIBG SK Puncak Alam" />
           <div>
             <h1>Persatuan Ibu Bapa dan Guru</h1>
             <h2>{settings?.school_name}{settings?.school_code ? ` (${settings.school_code})` : ''}</h2>

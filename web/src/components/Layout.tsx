@@ -57,7 +57,7 @@ export default function Layout({ children }: { children: ReactNode }) {
     <div className="shell">
       <aside className={`side ${open ? 'open' : ''}`}>
         <div className="brand">
-          <div className="logo">P</div>
+          <img className="logo" src="/logo.png" alt="Logo PIBG SK Puncak Alam" />
           <div>
             <strong>Portal PIBG</strong>
             <span>{settings?.school_name ?? 'SK Puncak Alam'}</span>
