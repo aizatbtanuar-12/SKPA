@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { supabase, check } from '../../lib/supabase'
+import { DataTable } from '../../components/DataTable'
 import { useAuth } from '../../lib/auth'
 import { PageHead } from '../../components/Layout'
-import { Badge, Card, Empty, Field, Modal, Pager, Spinner, Stat, useAction, useToast } from '../../components/ui'
+import { Badge, Card, Empty, Field, Modal, Spinner, Stat, useAction, useToast } from '../../components/ui'
 import { CampaignForm } from './Campaigns'
 import { campaignStatus, loadProgress, pct, transferRemark, type Campaign, type Donation, type Progress } from '../../lib/donations'
 import { date, dateTime, download, payLabel, payTone, rm, toCSV } from '../../lib/util'
@@ -20,7 +21,6 @@ export default function CampaignManage() {
   const [p, setP] = useState<Progress | undefined>()
   const [rows, setRows] = useState<Row[]>([])
   const [tab, setTab] = useState<'semak' | 'semua' | 'kelas'>('semak')
-  const [page, setPage] = useState(1)
   const [edit, setEdit] = useState(false)
   const [review, setReview] = useState<Row | null>(null)
   const [record, setRecord] = useState(false)
@@ -41,8 +41,6 @@ export default function CampaignManage() {
 
   const pending = rows.filter((r) => r.status === 'dihantar')
   const listed = tab === 'semak' ? pending : rows
-  const pages = Math.max(1, Math.ceil(listed.length / PAGE))
-  const shown = listed.slice((page - 1) * PAGE, page * PAGE)
 
   if (c === undefined) return <Spinner />
   if (!c) return <Empty>Kutipan tidak dijumpai.</Empty>
@@ -102,35 +100,28 @@ export default function CampaignManage() {
 
       <div className="tabs-row">
         <div className="seg">
-          <button className={tab === 'semak' ? 'on' : ''} onClick={() => { setTab('semak'); setPage(1) }}>Untuk disemak<span>{pending.length}</span></button>
-          <button className={tab === 'semua' ? 'on' : ''} onClick={() => { setTab('semua'); setPage(1) }}>Semua sumbangan<span>{rows.length}</span></button>
+          <button className={tab === 'semak' ? 'on' : ''} onClick={() => setTab('semak')}>Untuk disemak<span>{pending.length}</span></button>
+          <button className={tab === 'semua' ? 'on' : ''} onClick={() => setTab('semua')}>Semua sumbangan<span>{rows.length}</span></button>
           <button className={tab === 'kelas' ? 'on' : ''} onClick={() => setTab('kelas')}>Ikut kelas</button>
         </div>
       </div>
 
       {tab === 'kelas' ? <ByClass rows={rows} /> : (
         <Card>
-          {shown.length ? (
-            <table className="table">
-              <thead><tr><th>Dihantar</th><th>Keluarga / penyumbang</th><th className="num">Jumlah</th><th>Rujukan</th><th>Status</th><th /></tr></thead>
-              <tbody>
-                {shown.map((r) => (
-                  <tr key={r.id}>
-                    <td className="small">{dateTime(r.submitted_at)}</td>
-                    <td><span className="mono">{r.families?.family_code ?? ''}</span> {r.donor_name ?? r.submitter?.full_name}</td>
-                    <td className="num">{rm(r.amount)}</td>
-                    <td className="mono small">{r.reference || '-'}</td>
-                    <td><Badge tone={payTone[r.status]}>{payLabel[r.status]}</Badge></td>
-                    <td>
-                      {r.status === 'dihantar' && <button className="btn primary small" onClick={() => setReview(r)}>Semak</button>}
-                      {r.receipt_no && <Link className="link small mono" to={`/resit-sumbangan/${r.id}`}>{r.receipt_no}</Link>}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : <Empty>{tab === 'semak' ? 'Tiada sumbangan menunggu semakan.' : 'Belum ada sumbangan.'}</Empty>}
-          <Pager page={page} pages={pages} onChange={setPage} />
+          <DataTable rows={listed} rowKey={(r) => r.id} pageSize={PAGE} resetKey={tab}
+            initialSort={{ key: 'dihantar', dir: tab === 'semak' ? 'asc' : 'desc' }}
+            empty={tab === 'semak' ? 'Tiada sumbangan menunggu semakan.' : 'Belum ada sumbangan.'}
+            cols={[
+              { key: 'dihantar', label: 'Dihantar', sort: (r) => r.submitted_at, className: 'small', render: (r) => dateTime(r.submitted_at) },
+              { key: 'siapa', label: 'Keluarga / penyumbang', sort: (r) => r.families?.family_code ?? r.donor_name ?? r.submitter?.full_name, render: (r) => <><span className="mono">{r.families?.family_code ?? ''}</span> {r.donor_name ?? r.submitter?.full_name}</> },
+              { key: 'jumlah', label: 'Jumlah', num: true, sort: (r) => Number(r.amount), render: (r) => rm(r.amount) },
+              { key: 'ruj', label: 'Rujukan', sort: (r) => r.reference, className: 'mono small', render: (r) => r.reference || '-' },
+              { key: 'status', label: 'Status', sort: (r) => payLabel[r.status], render: (r) => <Badge tone={payTone[r.status]}>{payLabel[r.status]}</Badge> },
+              { key: 'aksi', label: '', render: (r) => <>
+                {r.status === 'dihantar' && <button className="btn primary small" onClick={() => setReview(r)}>Semak</button>}
+                {r.receipt_no && <Link className="link small mono" to={`/resit-sumbangan/${r.id}`}>{r.receipt_no}</Link>}
+              </> },
+            ]} />
         </Card>
       )}
 
@@ -254,24 +245,13 @@ function ByClass({ rows }: { rows: Row[] }) {
   if (!students) return <Spinner />
   return (
     <Card>
-      {table.length ? (
-        <table className="table">
-          <thead><tr><th>Kelas</th><th>Keluarga menyumbang</th><th>Penyertaan</th><th className="num">Jumlah keluarga kelas ini</th></tr></thead>
-          <tbody>
-            {table.map((r) => {
-              const pc = Math.round((r.donated / r.total) * 100)
-              return (
-                <tr key={r.name}>
-                  <td><strong>{r.name}</strong></td>
-                  <td>{r.donated} / {r.total}</td>
-                  <td style={{ minWidth: 160 }}><div className="progress"><div style={{ width: `${pc}%` }} /></div><span className="small muted">{pc}%</span></td>
-                  <td className="num">{rm(r.amount)}</td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
-      ) : <Empty>Tiada data kelas.</Empty>}
+      <DataTable rows={table} rowKey={(r) => r.name} pageSize={15} initialSort={{ key: 'sertai', dir: 'desc' }} empty="Tiada data kelas."
+        cols={[
+          { key: 'kelas', label: 'Kelas', sort: (r) => r.name, render: (r) => <strong>{r.name}</strong> },
+          { key: 'keluarga', label: 'Keluarga menyumbang', sort: (r) => r.donated, render: (r) => `${r.donated} / ${r.total}` },
+          { key: 'sertai', label: 'Penyertaan', sort: (r) => r.donated / r.total, render: (r) => { const pc = Math.round((r.donated / r.total) * 100); return <div style={{ minWidth: 160 }}><div className="progress"><div style={{ width: `${pc}%` }} /></div><span className="small muted">{pc}%</span></div> } },
+          { key: 'jumlah', label: 'Jumlah keluarga kelas ini', num: true, sort: (r) => r.amount, render: (r) => rm(r.amount) },
+        ]} />
       <p className="muted small">Keluarga yang mempunyai anak di beberapa kelas dikira dalam setiap kelas itu. Hanya sumbangan yang diluluskan dikira.</p>
     </Card>
   )
