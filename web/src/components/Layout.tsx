@@ -2,7 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import { useAuth, useRole } from '../lib/auth'
 import { roleLabel } from '../lib/util'
-import { initials, useIsMobile } from './pui'
+import { Live, initials, useIsMobile } from './pui'
 import { useUnreadMemos } from './useUnreadMemos'
 
 interface NavItem { to: string; label: string; icon: string; show: boolean; count?: number }
@@ -76,7 +76,7 @@ export default function Layout({ children }: { children: ReactNode }) {
   const item = (i: NavItem) => (
     <NavLink key={i.to} to={i.to} end={i.to === '/'} className="pside-link">
       <span className="ico" aria-hidden="true">{i.icon}</span>{i.label}
-      {i.count ? <span className="count" aria-label={`${i.count} belum dibaca`}>{i.count}</span> : null}
+      {i.count ? <Live className="count">{i.count}</Live> : null}
     </NavLink>
   )
 
@@ -131,7 +131,7 @@ export default function Layout({ children }: { children: ReactNode }) {
                     {g.items.map((i) => (
                       <NavLink key={i.to} to={i.to} end={i.to === '/'} className="menu-link">
                         <span className="ico" aria-hidden="true">{i.icon}</span><span>{i.label}</span>
-                        {i.count ? <span className="count">{i.count}</span> : null}
+                        {i.count ? <Live className="count">{i.count}</Live> : null}
                       </NavLink>
                     ))}
                   </div>

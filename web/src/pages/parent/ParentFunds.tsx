@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/auth'
-import { PageHead, PBadge, PPager, Seg, dayMonth, shortRM, useIsMobile, usePaged, type PTone } from '../../components/pui'
+import { Live, PageHead, PBadge, PPager, Seg, dayMonth, shortRM, useIsMobile, usePaged, type PTone } from '../../components/pui'
 import { date, rm } from '../../lib/util'
 import type { FundSummary } from '../Dashboard'
 
@@ -53,8 +53,8 @@ export default function ParentFunds() {
   const years = [0, 1, 2].map((d) => (settings?.current_year ?? year) - d)
 
   const tiles = fund && (
-    <div className="dana-tiles up">
-      <div className="navy"><span>Yuran dikutip</span><b>{shortRM(fund.yuran_collected)}</b><small>{fund.families_paid} / {fund.families_total} keluarga</small></div>
+    <div className="dana-tiles up" key={JSON.stringify(fund)}>
+      <div className="navy"><span>Yuran dikutip</span><Live as="b">{shortRM(fund.yuran_collected)}</Live><Live as="small">{`${fund.families_paid} / ${fund.families_total} keluarga`}</Live></div>
       <div className="gold"><span>Sumbangan &amp; pendapatan lain</span><b>{shortRM(otherIncome)}</b>{Number(fund.donations) > 0 && <small>termasuk kutipan dana {shortRM(fund.donations)}</small>}</div>
       <div className="red"><span>Perbelanjaan</span><b>{shortRM(fund.expenses)}</b></div>
       <div className={surplus < 0 ? 'neg' : 'green'}><span>{surplus < 0 ? 'Kurangan tahun ini' : 'Lebihan tahun ini'}</span><b>{shortRM(surplus)}</b></div>

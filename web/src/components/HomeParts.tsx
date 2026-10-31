@@ -1,7 +1,7 @@
 /* Pieces shared by the parent and staff home screens */
 import { Link } from 'react-router-dom'
 import type { FundSummary } from '../pages/Dashboard'
-import { Ring, dayMonth, shortRM, tintBg } from './pui'
+import { Live, Ring, dayMonth, shortRM, tintBg } from './pui'
 
 export interface MemoLite { id: number; title: string; published_at: string; pinned: boolean; audience: string; author: { full_name: string } | null }
 
@@ -24,15 +24,15 @@ export function DanaCard({ fund, large }: { fund: FundSummary | null; large?: bo
   const surplus = Number(fund?.balance ?? 0)
   return (
     <div className="pcard dana-card">
-      <div className="pcard-head"><h2>Dana PIBG {fund?.year ?? ''}</h2><Link to="/dana">Butiran →</Link></div>
+      <div className="pcard-head"><Live as="h2">{`Dana PIBG ${fund?.year ?? ''}`}</Live><Link to="/dana">Butiran →</Link></div>
       <div className="ring-row">
         <Ring pct={paidPct} large={large} />
-        <div><b>{fund?.families_paid ?? 0} daripada {fund?.families_total ?? 0} keluarga</b><span className="sub">telah melunaskan yuran tahun ini</span></div>
+        <div>{fund ? <Live as="b">{`${fund.families_paid} daripada ${fund.families_total} keluarga`}</Live> : <b>…</b>}<span className="sub">telah melunaskan yuran tahun ini</span></div>
       </div>
       <div className="mini-tiles">
-        <div><span>Dikutip</span><b>{shortRM(Number(fund?.yuran_collected ?? 0) + Number(fund?.donations ?? 0))}</b></div>
-        <div><span>Belanja</span><b>{shortRM(fund?.expenses)}</b></div>
-        <div className={surplus < 0 ? 'neg' : 'pos'}><span>{surplus < 0 ? 'Kurangan' : 'Lebihan'}</span><b>{shortRM(surplus)}</b></div>
+        <div><span>Dikutip</span><Live as="b">{shortRM(Number(fund?.yuran_collected ?? 0) + Number(fund?.donations ?? 0))}</Live></div>
+        <div><span>Belanja</span><Live as="b">{shortRM(fund?.expenses)}</Live></div>
+        <div className={surplus < 0 ? 'neg' : 'pos'}><Live>{surplus < 0 ? 'Kurangan' : 'Lebihan'}</Live><Live as="b">{shortRM(surplus)}</Live></div>
       </div>
     </div>
   )
