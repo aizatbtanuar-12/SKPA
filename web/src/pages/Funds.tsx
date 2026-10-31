@@ -69,6 +69,7 @@ export default function Funds() {
       {fund && (
         <div className="stats">
           <Stat label="Yuran dikutip" value={rm(fund.yuran_collected)} sub={`${fund.families_paid} daripada ${fund.families_total} keluarga`} />
+          <Stat label="Sumbangan (kutipan dana)" value={rm(fund.donations)} />
           <Stat label="Pendapatan lain" value={rm(fund.other_income)} />
           <Stat label="Perbelanjaan" value={rm(fund.expenses)} />
           <Stat label="Lebihan / kurangan tahun ini" value={rm(fund.balance)} tone={Number(fund.balance) < 0 ? 'red' : 'green'} />

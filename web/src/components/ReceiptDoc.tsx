@@ -11,6 +11,9 @@ export interface ReceiptData {
   amount: number
   method: string
   reference: string | null
+  /** donation receipts: own title and item text */
+  title?: string
+  item?: string
 }
 
 const methodLabel: Record<string, string> = { pindahan: 'Pindahan bank', tunai: 'Tunai', lain: 'Lain-lain' }
@@ -28,21 +31,21 @@ export default function ReceiptDoc({ s, d }: { s: Partial<Settings>; d: ReceiptD
           {header.map((l, i) => <div key={i} className="receipt-header-line">{l}</div>)}
         </div>
       </header>
-      <h3>{s.receipt_title || 'RESIT RASMI YURAN PIBG'}</h3>
+      <h3>{d.title || s.receipt_title || 'RESIT RASMI YURAN PIBG'}</h3>
       <dl className="dl">
         <dt>No. resit</dt><dd className="mono" translate="no">{d.receipt_no}</dd>
         <dt>Tarikh</dt><dd>{dateTime(d.date)}</dd>
         <dt>Kod keluarga</dt><dd className="mono" translate="no">{d.family_code}</dd>
         <dt>Diterima daripada</dt><dd translate="no">{d.guardians}</dd>
-        <dt>Perkara</dt><dd>Yuran PIBG sekeluarga tahun {d.year}</dd>
+        <dt>Perkara</dt><dd>{d.item || `Yuran PIBG sekeluarga tahun ${d.year}`}</dd>
         <dt>Kaedah</dt><dd>{methodLabel[d.method] ?? d.method}{d.reference ? <> · <span className="mono" translate="no">{d.reference}</span></> : ''}</dd>
       </dl>
-      <div className="receipt-children">
+      {d.children.length > 0 && <div className="receipt-children">
         <span className="receipt-label">Anak ({d.children.length})</span>
         <ol translate="no">
           {d.children.map((c, i) => <li key={i}><span>{c.name}</span><span className="muted">{c.className}</span></li>)}
         </ol>
-      </div>
+      </div>}
       <div className="receipt-total"><span>Jumlah</span><strong>{rm(d.amount)}</strong></div>
       {s.receipt_note && <p className="receipt-note">{s.receipt_note}</p>}
       {s.receipt_signatory && (

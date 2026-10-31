@@ -21,6 +21,11 @@ import PaymentReview from './pages/staff/PaymentReview'
 import Import from './pages/staff/Import'
 import Users from './pages/admin/Users'
 import Settings from './pages/admin/Settings'
+import Donations from './pages/Donations'
+import DonationCampaign from './pages/DonationCampaign'
+import DonationReceipt from './pages/DonationReceipt'
+import Campaigns from './pages/staff/Campaigns'
+import CampaignManage from './pages/staff/CampaignManage'
 
 function Guard({ ok, children }: { ok: boolean; children: ReactNode }) {
   return ok ? <>{children}</> : <Navigate to="/" replace />
@@ -56,6 +61,11 @@ function Routed() {
         <Route path="/agm" element={<Agm />} />
         <Route path="/profil" element={<Profile />} />
         <Route path="/resit/:id" element={<Receipt />} />
+        <Route path="/sumbangan" element={<Donations />} />
+        <Route path="/sumbangan/:id" element={<DonationCampaign />} />
+        <Route path="/resit-sumbangan/:id" element={<DonationReceipt />} />
+        <Route path="/kempen" element={<Guard ok={r.isStaff}><Campaigns /></Guard>} />
+        <Route path="/kempen/:id" element={<Guard ok={r.isStaff}><CampaignManage /></Guard>} />
         <Route path="/anak" element={<Guard ok={r.isParent}><MyChildren /></Guard>} />
         <Route path="/yuran" element={<Guard ok={r.isParent}><ParentFees /></Guard>} />
         <Route path="/pengesahan" element={<Guard ok={r.canVerify}><Verify /></Guard>} />
