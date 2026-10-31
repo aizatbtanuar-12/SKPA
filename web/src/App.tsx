@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import { HashRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { AuthProvider, useAuth, useRole } from './lib/auth'
 import { configured } from './lib/supabase'
+import { useLang } from './lib/i18n'
 import { Spinner, ToastProvider } from './components/ui'
 import Layout from './components/Layout'
 import Login from './pages/Login'
@@ -39,6 +40,7 @@ function Guard({ ok, children }: { ok: boolean; children: ReactNode }) {
 function Routed() {
   const { session, loading, profile, error, refresh, signOut } = useAuth()
   const r = useRole()
+  const lang = useLang() // re-render pages (dates, numbers) when the language changes
   if (loading) return <div className="center"><Spinner /></div>
   if (!session) return <Login />
   if (!profile) {
@@ -59,7 +61,7 @@ function Routed() {
   }
   return (
     <Layout>
-      <Routes>
+      <Routes key={lang}>
         <Route path="/" element={r.isParent ? <ParentHome /> : <Dashboard />} />
         <Route path="/memo" element={r.isParent ? <ParentMemos /> : <Memos />} />
         <Route path="/dana" element={r.isParent ? <ParentFunds /> : <Funds />} />

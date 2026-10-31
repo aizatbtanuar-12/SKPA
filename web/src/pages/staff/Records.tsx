@@ -60,7 +60,7 @@ export default function Records() {
           initialSort={{ key: 'nama', dir: 'asc' }} empty="Tiada rekod. Import senarai murid atau tambah secara manual."
           cols={[
             { key: 'nama', label: 'Nama murid', sort: (s) => s.full_name, render: (s) => <><strong>{s.full_name}</strong><div className="muted small">{fmtIC(s.ic_no)}</div></> },
-            { key: 'kelas', label: 'Kelas', sort: (s) => className(s.class_id), render: (s) => <>{className(s.class_id)}{s.status === 'keluar' && <> <Badge tone="grey">Keluar</Badge></>}</> },
+            { key: 'kelas', label: 'Kelas', sort: (s) => className(s.class_id), render: (s) => <>{className(s.class_id)}{s.status === 'keluar' && <> <Badge tone="grey">Telah keluar</Badge></>}</> },
             { key: 'penjaga', label: 'Ibu bapa / penjaga', sort: (s) => s.student_guardians[0]?.guardians.full_name, render: (s) => (
               s.student_guardians.length ? s.student_guardians.map((g) => (
                 <div key={g.guardians.id} className="small">

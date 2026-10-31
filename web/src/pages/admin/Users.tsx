@@ -223,7 +223,7 @@ function UsersCard({ users, reload }: { users: P[]; reload: () => Promise<void> 
           { key: 'nama', label: 'Nama', sort: (u) => u.full_name, render: (u) => u.full_name || '-' },
           { key: 'ic', label: 'No. KP', sort: (u) => u.ic_no, className: 'mono small', render: (u) => maskIC(u.ic_no) },
           { key: 'tel', label: 'Telefon', sort: (u) => u.phone, render: (u) => u.phone || '-' },
-          { key: 'daftar', label: 'Daftar', sort: (u) => u.created_at, className: 'small', render: (u) => date(u.created_at) },
+          { key: 'daftar', label: 'Tarikh daftar', sort: (u) => u.created_at, className: 'small', render: (u) => date(u.created_at) },
           { key: 'peranan', label: 'Peranan', sort: (u) => roleLabel[u.role], render: (u) => (
             <select value={u.role} onChange={(e) => setRole(u, e.target.value as Role)} disabled={busy}>
               {(Object.keys(roleLabel) as Role[]).map((r) => <option key={r} value={r}>{roleLabel[r]}</option>)}

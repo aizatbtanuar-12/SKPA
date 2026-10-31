@@ -1,6 +1,7 @@
 /* Building blocks for the redesigned parent screens (see parent.css) */
 import { useEffect, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
+import { locale } from '../lib/i18n'
 
 export function useIsMobile() {
   const q = '(max-width: 759px)'
@@ -134,7 +135,7 @@ export const tintBg = (i: number, l = 0.93) => `oklch(${l} 0.06 ${HUES[((i % 4) 
 export const tintInk = (i: number) => ['#7a5200', '#14315e', '#7a2219', '#145c35'][((i % 4) + 4) % 4]
 
 export const todayLong = () =>
-  new Date().toLocaleDateString('ms-MY', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+  new Date().toLocaleDateString(locale(), { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
 
 const MONTHS = ['Jan', 'Feb', 'Mac', 'Apr', 'Mei', 'Jun', 'Jul', 'Ogo', 'Sep', 'Okt', 'Nov', 'Dis']
 export const dayMonth = (d: string | null | undefined) => {

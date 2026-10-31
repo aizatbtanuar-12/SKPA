@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { supabase, check } from '../lib/supabase'
 import { useAuth, useRole } from '../lib/auth'
 import SpouseCard from '../components/SpouseCard'
+import LangSwitch from '../components/LangSwitch'
 import { PageHead } from '../components/Layout'
 import { Card, Field, useAction } from '../components/ui'
 import { normIC, roleLabel, validIC } from '../lib/util'
@@ -47,7 +48,13 @@ export default function Profile() {
           </form>
         </Card>
       </div>
-      {hasFamily && <div className="grid2"><SpouseCard /></div>}
+      <div className="grid2">
+        <Card title="Bahasa paparan">
+          <p className="muted small" style={{ marginTop: 0 }}>Bahasa aplikasi untuk akaun anda, di semua peranti.</p>
+          <LangSwitch />
+        </Card>
+        {hasFamily && <SpouseCard />}
+      </div>
     </>
   )
 }

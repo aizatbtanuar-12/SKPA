@@ -4,8 +4,10 @@ import './index.css'
 import './parent.css'
 import App from './App'
 import { installTranslateGuard } from './lib/translateSafe'
+import { startI18n } from './lib/i18n'
 
 installTranslateGuard()
+startI18n()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
