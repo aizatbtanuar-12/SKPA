@@ -3,33 +3,39 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
 import { Empty, Spinner } from '../components/ui'
-import { dateTime, rm } from '../lib/util'
+import ReceiptDoc, { type ReceiptData } from '../components/ReceiptDoc'
 import type { Payment } from './parent/ParentFees'
 
-interface Fam { family_code: string; children: string; guardians: string }
-const methodLabel: Record<string, string> = { pindahan: 'Pindahan bank', tunai: 'Tunai', lain: 'Lain-lain' }
+interface StudentRow { full_name: string; classes: { name: string; year_level: number | null } | null }
 
 export default function Receipt() {
   const { id } = useParams()
   const { settings } = useAuth()
   const nav = useNavigate()
-  const [p, setP] = useState<Payment | null | undefined>(undefined)
-  const [fam, setFam] = useState<Fam | null>(null)
+  const [data, setData] = useState<ReceiptData | null | undefined>(undefined)
 
   useEffect(() => {
-    supabase.from('fee_payments').select('*').eq('id', Number(id)).maybeSingle().then(async ({ data }) => {
-      const pay = data as Payment | null
-      setP(pay)
-      if (pay) {
-        const { data: f } = await supabase.from('family_fee_status')
-          .select('family_code,children,guardians').eq('family_id', pay.family_id).maybeSingle()
-        setFam(f as Fam | null)
-      }
-    })
+    (async () => {
+      const { data: p } = await supabase.from('fee_payments').select('*').eq('id', Number(id)).maybeSingle()
+      const pay = p as Payment | null
+      if (!pay || pay.status !== 'diluluskan') { setData(null); return }
+      const [f, st] = await Promise.all([
+        supabase.from('family_fee_status').select('family_code,guardians').eq('family_id', pay.family_id).maybeSingle(),
+        supabase.from('students').select('full_name, classes(name, year_level)').eq('family_id', pay.family_id).eq('status', 'aktif'),
+      ])
+      const fam = f.data as { family_code: string; guardians: string } | null
+      const kids = ((st.data as unknown as StudentRow[]) ?? [])
+        .sort((a, b) => (a.classes?.year_level ?? 99) - (b.classes?.year_level ?? 99) || a.full_name.localeCompare(b.full_name))
+      setData({
+        receipt_no: pay.receipt_no, date: pay.reviewed_at, family_code: fam?.family_code ?? '',
+        guardians: fam?.guardians ?? '', year: pay.year, amount: pay.amount, method: pay.method, reference: pay.reference,
+        children: kids.map((k) => ({ name: k.full_name, className: k.classes?.name ?? '' })),
+      })
+    })()
   }, [id])
 
-  if (p === undefined) return <Spinner />
-  if (!p || p.status !== 'diluluskan') return <Empty>Resit tidak dijumpai atau bayaran belum diluluskan.</Empty>
+  if (data === undefined) return <Spinner />
+  if (!data || !settings) return <Empty>Resit tidak dijumpai atau bayaran belum diluluskan.</Empty>
 
   return (
     <div className="receipt-wrap">
@@ -37,27 +43,7 @@ export default function Receipt() {
         <button className="btn primary" onClick={() => window.print()}>Cetak / Simpan PDF</button>
         <button className="btn ghost" onClick={() => nav(-1)}>Kembali</button>
       </div>
-      <article className="receipt">
-        <header>
-          <img className="logo" src="/logo.png" alt="Logo PIBG SK Puncak Alam" />
-          <div>
-            <h1>Persatuan Ibu Bapa dan Guru</h1>
-            <h2>{settings?.school_name}{settings?.school_code ? ` (${settings.school_code})` : ''}</h2>
-          </div>
-        </header>
-        <h3>RESIT RASMI YURAN PIBG</h3>
-        <dl className="dl">
-          <dt>No. resit</dt><dd className="mono">{p.receipt_no}</dd>
-          <dt>Tarikh</dt><dd>{dateTime(p.reviewed_at)}</dd>
-          <dt>Kod keluarga</dt><dd className="mono">{fam?.family_code}</dd>
-          <dt>Diterima daripada</dt><dd>{fam?.guardians}</dd>
-          <dt>Anak</dt><dd>{fam?.children}</dd>
-          <dt>Perkara</dt><dd>Yuran PIBG sekeluarga tahun {p.year}</dd>
-          <dt>Kaedah</dt><dd>{methodLabel[p.method] ?? p.method}{p.reference ? ` · ${p.reference}` : ''}</dd>
-        </dl>
-        <div className="receipt-total"><span>Jumlah</span><strong>{rm(p.amount)}</strong></div>
-        <p className="muted small">Resit ini dijana oleh komputer dan tidak memerlukan tandatangan.</p>
-      </article>
+      <ReceiptDoc s={settings} d={data} />
     </div>
   )
 }

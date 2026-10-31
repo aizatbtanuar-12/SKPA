@@ -34,6 +34,7 @@ You need a free [Supabase](https://supabase.com) account (database + login + fil
 3. New query again → paste `supabase/migrations/002_storage.sql` → **Run**.
 4. New query again → paste `supabase/migrations/003_profile_repair.sql` → **Run**. This repairs any account registered before steps 2–3 were done, and is safe to run again any time.
 5. New query again → paste `supabase/migrations/004_class_levels.sql` → **Run**. Adds Prasekolah and PPKI classes and class rename/delete.
+6. New query again → paste `supabase/migrations/005_receipt_format.sql` → **Run**. Lets admins customise the receipt (Tetapan → Format resit).
 
 ### 2. Configure sign-in e-mails (important)
 Supabase's built-in e-mail sender only delivers to your own Supabase team members, and only 2 e-mails per hour. Parents would never receive their confirmation e-mail. Pick one option:
@@ -94,6 +95,7 @@ These rules are enforced **inside the database** (Postgres Row Level Security), 
 
 - Parents must tick a consent notice when registering. The time of consent is stored.
 - A parent's account is only linked to a family after a class teacher verifies a child. If an IC is already linked to another account, the link is refused, which stops impersonation.
+- When a parent picks a receipt screenshot, the reference number and amount are read automatically **on the parent's own phone** (tesseract.js, served from this site, so the image is not sent to any outside service for reading). Parents confirm or correct the values. On **Semakan Bayaran**, the treasurer is warned if the same bank reference was used on another payment.
 - Payment proofs are stored privately. Only the uploader and AJK PIBG can open them.
 - AGM votes are secret. Everyone, including AJK, sees only the totals, and parents see them only after a motion is closed. Each family votes once, after checking in.
 - IC numbers are shown masked (`••••••-••-1234`) to teachers and on parent screens.
@@ -134,6 +136,7 @@ supabase/migrations/001_schema.sql   tables, family/sibling logic, functions, se
 supabase/migrations/002_storage.sql  private bucket for payment proofs
 supabase/migrations/003_profile_repair.sql  repairs accounts created before setup
 supabase/migrations/004_class_levels.sql    Prasekolah (0) & PPKI (7) levels, tidy class names
+supabase/migrations/005_receipt_format.sql  receipt header/footer/signature settings
 supabase/tests/                      scenario tests (12 scenarios)
 web/src/pages/                       one file per screen (parent/, teacher/, staff/, admin/)
 web/src/lib/                         Supabase client, auth/roles, helpers

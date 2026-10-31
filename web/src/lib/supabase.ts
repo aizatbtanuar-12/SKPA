@@ -30,6 +30,14 @@ export interface Settings {
   bank_account: string | null
   bank_holder: string | null
   contact_phone: string | null
+  // receipt layout (migration 005); optional so the app still works before it is run
+  receipt_org_name?: string | null
+  receipt_title?: string | null
+  receipt_header?: string | null
+  receipt_footer?: string | null
+  receipt_show_logo?: boolean | null
+  receipt_signatory?: string | null
+  receipt_note?: string | null
 }
 
 export interface ClassRow {

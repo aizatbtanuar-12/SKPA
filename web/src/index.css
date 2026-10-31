@@ -113,7 +113,7 @@ textarea { resize: vertical; }
 .small { font-size: .82rem; }
 .mono { font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: .9em; }
 .pre { white-space: pre-wrap; }
-.row { display: flex; align-items: flex-end; }
+.row { display: flex; align-items: flex-start; }
 .row > .field { flex: 1; }
 .gap { gap: .6rem; }
 .wrap { flex-wrap: wrap; }
@@ -151,10 +151,11 @@ textarea { resize: vertical; }
 .alert.err { background: var(--red-bg); color: var(--red); }
 
 .field { display: flex; flex-direction: column; gap: .3rem; margin-bottom: .8rem; min-width: 140px; }
-.field > span { font-size: .82rem; font-weight: 600; }
+.field > span { font-size: .82rem; font-weight: 600; line-height: 1.2rem; }
 .field small { color: var(--muted); font-size: .76rem; }
 .form { display: flex; flex-direction: column; }
 .form > .btn { align-self: flex-start; }
+.modal .form > .btn:last-child { align-self: flex-end; min-width: 120px; }
 .check { display: flex; gap: .6rem; align-items: flex-start; font-size: .82rem; color: var(--muted); margin: .2rem 0 .8rem; }
 .check input { margin-top: .25rem; }
 .filters { display: flex; gap: .6rem; flex-wrap: wrap; margin-bottom: .8rem; }
@@ -277,3 +278,34 @@ textarea { resize: vertical; }
 .copy-preview { max-height: 220px; overflow-y: auto; background: var(--bg); border-radius: 8px; padding: .5rem .8rem; font-size: .85rem; margin: .5rem 0 1rem; }
 .check-row { display: flex; flex-wrap: wrap; gap: .4rem 1rem; margin: .3rem 0 .6rem; }
 .check-row label { display: flex; gap: .35rem; align-items: center; font-size: .9rem; }
+.ocr-box { background: var(--brand-soft); border-radius: 8px; padding: .6rem .8rem; margin: -.3rem 0 .8rem; display: flex; flex-direction: column; gap: .35rem; }
+.receipt-header-line { font-size: .82rem; color: var(--muted); }
+.receipt-children { display: grid; grid-template-columns: max-content 1fr; gap: 1rem; font-size: .9rem; margin-top: -.2rem; }
+.receipt-label { color: var(--muted); min-width: 118px; }
+.receipt-children ol { margin: 0; padding-left: 1.2rem; font-weight: 600; }
+.receipt-children li { padding: .1rem 0; }
+.receipt-children li span.muted { font-weight: 400; margin-left: .5rem; font-size: .82rem; }
+.receipt-note { text-align: center; font-weight: 600; margin: .4rem 0; }
+.receipt-sign { margin: 2.2rem 0 .6rem auto; width: 220px; text-align: center; font-size: .85rem; }
+.sign-line { border-bottom: 1px solid var(--ink); height: 2.2rem; margin-bottom: .3rem; }
+.receipt-footer { font-size: .78rem; color: var(--muted); white-space: pre-wrap; margin: .6rem 0 0; }
+.receipt .dl dt { min-width: 118px; }
+.receipt-preview { transform-origin: top left; }
+@media (max-width: 760px) { .receipt-children { grid-template-columns: 1fr; gap: .3rem; } }
+.receipt-editor { display: grid; grid-template-columns: minmax(280px, 1fr) minmax(320px, 1.2fr); gap: 1.5rem; align-items: start; }
+.receipt-preview .receipt { margin-top: .4rem; padding: 1.4rem; font-size: .92em; }
+@media (max-width: 1000px) { .receipt-editor { grid-template-columns: 1fr; } }
+
+/* ---------- standard control sizes (all forms) ---------- */
+:root { --control-h: 2.6rem; }
+input:not([type=checkbox]):not([type=radio]):not([type=file]), select { height: var(--control-h); }
+input[type=date], input[type=datetime-local], input[type=time] { line-height: normal; padding-top: 0; padding-bottom: 0; }
+input[type=file] { min-height: var(--control-h); }
+select { padding-left: .5rem; }
+.btn { min-height: var(--control-h); }
+.btn.small { min-height: 0; }
+.table td select, .table td input { height: 2.1rem; }
+/* a button placed beside labelled fields lines up with the inputs, not the labels/hints */
+.row:has(> .field) > .btn, .row:has(> .field) > form > .btn { margin-top: 1.5rem; }
+.row > input, .row > select { flex: 1; }
+.row > .btn { flex-shrink: 0; }
