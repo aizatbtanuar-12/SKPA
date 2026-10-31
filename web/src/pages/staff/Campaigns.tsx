@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase, check } from '../../lib/supabase'
-import { useAuth } from '../../lib/auth'
+import { useAuth, useRole } from '../../lib/auth'
 import { PageHead } from '../../components/Layout'
 import { Empty, Field, Modal, useAction } from '../../components/ui'
 import CampaignCard from '../../components/CampaignCard'
@@ -9,6 +9,7 @@ import { compressImage } from '../../lib/image'
 import { loadProgress, posterUrl, type Campaign, type Progress } from '../../lib/donations'
 
 export default function Campaigns() {
+  const canK = useRole().can('kempen')
   const [list, setList] = useState<Campaign[]>([])
   const [prog, setProg] = useState<Record<number, Progress>>({})
   const [open, setOpen] = useState(false)
@@ -22,7 +23,7 @@ export default function Campaigns() {
   return (
     <>
       <PageHead title="Kutipan Dana" sub="Kutipan sumbangan selain yuran PIBG, cth: Smart TV, penapis air. Semua ke akaun bank PIBG yang sama; setiap kutipan ada kod rujukan sendiri."
-        actions={<button className="btn primary" onClick={() => setOpen(true)}>+ Kutipan baru</button>} />
+        actions={canK && <button className="btn primary" onClick={() => setOpen(true)}>+ Kutipan baru</button>} />
       {list.length ? (
         <div className="campaign-grid">
           {list.map((c) => <CampaignCard key={c.id} c={c} p={prog[c.id]} to={`/kempen/${c.id}`} />)}

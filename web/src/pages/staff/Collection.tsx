@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import { supabase, check } from '../../lib/supabase'
-import { useAuth } from '../../lib/auth'
+import { useAuth, useRole } from '../../lib/auth'
 import { PageHead } from '../../components/Layout'
 import { Badge, Card, Field, Modal, Stat, useAction } from '../../components/ui'
 import { download, feeStatusLabel, feeStatusTone, rm, toCSV } from '../../lib/util'
@@ -10,6 +10,7 @@ import { DataTable } from '../../components/DataTable'
 
 export default function Collection() {
   const { settings, classes } = useAuth()
+  const canReview = useRole().can('semak_bayaran')
   const [rows, setRows] = useState<FeeStatus[]>([])
   const [filter, setFilter] = useState<'' | 'lunas' | 'menunggu' | 'belum'>('')
   const [cls, setCls] = useState('')
@@ -80,7 +81,7 @@ export default function Collection() {
             { key: 'dibayar', label: 'Dibayar', num: true, sort: (r) => Number(r.paid), render: (r) => rm(r.paid) },
             { key: 'status', label: 'Status', sort: (r) => feeStatusLabel[r.status], render: (r) => <Badge tone={feeStatusTone[r.status]}>{feeStatusLabel[r.status]}</Badge> },
             { key: 'aksi', label: '', render: (r) => <div className="row-actions">
-              {r.status === 'menunggu' && <Link to="/semakan-bayaran" className="btn ghost small">Semak</Link>}
+              {canReview && r.status === 'menunggu' && <Link to="/semakan-bayaran" className="btn ghost small">Semak</Link>}
               {r.status !== 'lunas' && <button className="btn small" onClick={() => setPay(r)}>Rekod bayaran</button>}
             </div> },
           ]} />

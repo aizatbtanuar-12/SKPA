@@ -42,7 +42,7 @@ export default function Agm() {
     const mots = (data as Motion[]) ?? []
     setMotions(mots)
     const res: Record<number, Result[]> = {}
-    await Promise.all(mots.filter((m) => r.isStaff ? m.status !== 'draf' : m.status === 'ditutup').map(async (m) => {
+    await Promise.all(mots.filter((m) => r.can('agm') ? m.status !== 'draf' : m.status === 'ditutup').map(async (m) => {
       const { data: rr } = await supabase.rpc('motion_results', { p_motion: m.id })
       res[m.id] = (rr as Result[]) ?? []
     }))
@@ -57,7 +57,7 @@ export default function Agm() {
     }
     const { data: st } = await supabase.rpc('agm_stats', { p_meeting: sel })
     setStats((st as { families_present: number; quorum: number }[] | null)?.[0] ?? null)
-  }, [sel, familyId, r.isStaff])
+  }, [sel, familyId, r.can('agm')])
 
   useEffect(() => { loadDetail() }, [loadDetail])
   // live refresh while the meeting is open
@@ -94,7 +94,7 @@ export default function Agm() {
                 {meetings.map((m) => <option key={m.id} value={m.id}>{m.title}</option>)}
               </select>
             )}
-            {r.isStaff && <button className="btn primary" onClick={() => setNewMeeting(true)}>+ Mesyuarat</button>}
+            {r.can('agm') && <button className="btn primary" onClick={() => setNewMeeting(true)}>+ Mesyuarat</button>}
           </>
         } />
 
@@ -116,7 +116,7 @@ export default function Agm() {
               : meeting.status === 'dibuka' ? <button className="btn primary" disabled={busy} onClick={checkIn}>Daftar kehadiran saya</button>
               : <p className="muted">Pendaftaran kehadiran akan dibuka pada hari mesyuarat.</p>
             )}
-            {r.isStaff && (
+            {r.can('agm') && (
               <div className="row gap wrap">
                 {meeting.status !== 'dibuka' && <button className="btn" onClick={() => setMeetingStatus('dibuka')}>Buka kehadiran</button>}
                 {meeting.status === 'dibuka' && <button className="btn" onClick={() => setMeetingStatus('ditutup')}>Tutup mesyuarat</button>}
@@ -128,10 +128,10 @@ export default function Agm() {
             )}
           </Card>
 
-          <Card title="Usul" actions={r.isStaff && <button className="btn" onClick={() => setNewMotion(true)}>+ Usul</button>}>
-            {motions.filter((m) => r.isStaff || m.status !== 'draf').length ? (
+          <Card title="Usul" actions={r.can('agm') && <button className="btn" onClick={() => setNewMotion(true)}>+ Usul</button>}>
+            {motions.filter((m) => r.can('agm') || m.status !== 'draf').length ? (
               <div className="motions">
-                {motions.filter((m) => r.isStaff || m.status !== 'draf').map((m, i) => {
+                {motions.filter((m) => r.can('agm') || m.status !== 'draf').map((m, i) => {
                   const res = results[m.id]
                   const total = res?.reduce((a, x) => a + Number(x.votes), 0) ?? 0
                   return (
@@ -163,7 +163,7 @@ export default function Agm() {
                         </div>
                       )}
 
-                      {r.isStaff && (
+                      {r.can('agm') && (
                         <div className="row gap">
                           {m.status === 'draf' && <button className="btn small" onClick={() => setMotionStatus(m.id, 'dibuka')}>Buka undian</button>}
                           {m.status === 'dibuka' && <button className="btn small" onClick={() => setMotionStatus(m.id, 'ditutup')}>Tutup & umum keputusan</button>}

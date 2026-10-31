@@ -50,7 +50,7 @@ export default function Memos() {
     } catch { toast('Tidak dapat menyalin.', 'err') }
   }
 
-  const canManage = (m: Memo) => r.isStaff || m.author_id === profile?.id
+  const canManage = (m: Memo) => r.isAdmin || m.author_id === profile?.id
   const audienceLabel = (m: Memo) =>
     m.audience === 'semua' ? 'Semua' : m.audience === 'guru' ? 'Guru sahaja' : `Kelas ${classes.find((c) => c.id === m.class_id)?.name ?? ''}`
 
@@ -77,7 +77,7 @@ export default function Memos() {
                 {canManage(m) && (
                   <>
                     <span className="muted small">Dibaca oleh {m.memo_reads?.[0]?.count ?? 0} pengguna</span>
-                    {r.isStaff && <button className="btn ghost small" onClick={() => run(async () => {
+                    {r.isAdmin && <button className="btn ghost small" onClick={() => run(async () => {
                       check(await supabase.from('memos').update({ pinned: !m.pinned }).eq('id', m.id)); load()
                     })}>{m.pinned ? 'Nyahsemat' : 'Semat'}</button>}
                     <button className="btn ghost small danger-text" onClick={() => run(async () => {

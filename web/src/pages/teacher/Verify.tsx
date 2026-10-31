@@ -15,7 +15,9 @@ interface ClaimRow {
 interface Suggestion { student_id: number; full_name: string; class_name: string; ic_last4: string | null; score: number; reason: string }
 
 export default function Verify() {
-  const { isStaff, myClasses } = useRole()
+  const acc = useRole()
+  const { myClasses } = acc
+  const isStaff = acc.can('sahkan_murid')
   const [rows, setRows] = useState<ClaimRow[]>([])
   const [filter, setFilter] = useState<'menunggu' | 'semua'>('menunggu')
   const [open, setOpen] = useState<ClaimRow | null>(null)

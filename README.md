@@ -7,7 +7,8 @@ A web portal for the PIBG (Parent-Teacher Association) of SK Puncak Alam. It wor
 - **Ketua Panitia** post memos and propose programs.
 - **Donation drives (Kutipan Dana)** such as Smart TV or water filters: the committee creates a drive with a short code (e.g. `SMARTTV`), poster, optional target and end date. Parents transfer any amount to the same PIBG account with the remark `SMARTTV K00012` (drive code + family code), upload proof, and get a separate donation receipt (`SUMB-SKPA/2026/0001`). Everyone sees progress and number of donors; only the committee sees who gave what. Includes a ready-made WhatsApp announcement and per-class participation.
 - **AJK PIBG / Bendahari** manage student and family records, import lists from Excel, approve payments, record cash, publish income and expenses, and run the AGM.
-- **Pengerusi PIBG (chairman)** has the same powers as AJK PIBG.
+- **Pengerusi PIBG (chairman)**, **Bendahari PIBG (treasurer)** and **AJK PIBG** can view records; what each of them may *change* is set by the administrator in **Tetapan → Akses pengguna**. By default AJK PIBG may only manage fund-raising drives, post memos and view reports.
+- **Laporan** (reports: fee collection by class and month, donations, finances — totals only) for the committee and teachers.
 - **Pentadbir (admin)** assign roles and class teachers.
 - The chairman, AJK PIBG and admin can also use every parent function (Anak Saya, Yuran PIBG, AGM vote), since they are parents too.
 
@@ -41,6 +42,7 @@ You need a free [Supabase](https://supabase.com) account (database + login + fil
 7. Then `006_donations.sql` and `007_poster_storage.sql`, each → **Run**. Adds donation drives (Kutipan Dana) and poster uploads.
 8. Then `008_family_count.sql` → **Run**. Counts families that have paid or are waiting for their children to be verified in the "x daripada y keluarga" figure.
 9. Then `009_family_rules.sql` → **Run**. Adds the Pengerusi PIBG role, makes IC numbers compulsory, records each parent's spouse, and stops a student IC being registered under two families.
+10. Then `010_access.sql` → **Run**. Adds the Bendahari PIBG role, **Tetapan → Akses pengguna** (the administrator decides what each role may change) and the **Laporan** page. Afterwards, in **Pengguna & Kelas**, change your treasurer's role to *Bendahari PIBG* (AJK PIBG no longer approves payments by default).
 
 ### 2. Configure sign-in e-mails (important)
 Supabase's built-in e-mail sender only delivers to your own Supabase team members, and only 2 e-mails per hour. Parents would never receive their confirmation e-mail. Pick one option:
@@ -149,6 +151,8 @@ supabase/migrations/007_poster_storage.sql  public bucket for drive posters
 supabase/migrations/008_family_count.sql    family count for fund summary / fee status
 supabase/migrations/009_family_rules.sql    chairman role, compulsory IC, spouse, one family per student
 supabase/tests/30_family_rules.sql          tests for 009
+supabase/migrations/010_access.sql          Bendahari role, per-role permissions, reports
+supabase/tests/40_access.sql                tests for 010
 supabase/tests/                      scenario tests (12 scenarios)
 web/src/pages/                       one file per screen (parent/, teacher/, staff/, admin/)
 web/src/lib/                         Supabase client, auth/roles, helpers

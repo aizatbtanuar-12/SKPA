@@ -13,7 +13,8 @@ import { DataTable } from '../components/DataTable'
 export default function DonationCampaign() {
   const { id } = useParams()
   const { profile, settings, familyId } = useAuth()
-  const { isStaff } = useRole()
+  const acc = useRole()
+  const canManage = acc.can('kempen') || acc.can('semak_sumbangan')
   const toast = useToast()
   const [c, setC] = useState<Campaign | null | undefined>(undefined)
   const [p, setP] = useState<Progress | undefined>()
@@ -95,7 +96,7 @@ export default function DonationCampaign() {
       <PageHead title={c.title} sub={<><Badge tone={campaignStatus[c.status][1]}>{campaignStatus[c.status][0]}</Badge>{c.end_date && <span className="muted"> · hingga {date(c.end_date)}</span>}</>}
         actions={<>
           <Link className="btn ghost" to="/sumbangan">‹ Semua sumbangan</Link>
-          {isStaff && <Link className="btn" to={`/kempen/${c.id}`}>Urus kutipan ini</Link>}
+          {canManage && <Link className="btn" to={`/kempen/${c.id}`}>Urus kutipan ini</Link>}
         </>} />
 
       <div className="stats kpis">

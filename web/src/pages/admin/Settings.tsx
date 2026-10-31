@@ -1,11 +1,13 @@
 import { useState, type FormEvent } from 'react'
 import { supabase } from '../../lib/supabase'
-import { useAuth } from '../../lib/auth'
+import { useAuth, useRole } from '../../lib/auth'
+import { Seg } from '../../components/pui'
+import AccessSettings from './AccessSettings'
 import { PageHead } from '../../components/Layout'
 import { Card, Field, useAction } from '../../components/ui'
 import ReceiptDoc, { SAMPLE_RECEIPT } from '../../components/ReceiptDoc'
 
-export default function Settings() {
+function GeneralSettings() {
   const { settings, refresh } = useAuth()
   const [f, setF] = useState({
     school_name: settings?.school_name ?? '', school_code: settings?.school_code ?? '',
@@ -49,7 +51,6 @@ export default function Settings() {
 
   return (
     <>
-      <PageHead title="Tetapan" />
       <form onSubmit={saveMain} style={{ marginBottom: 16 }}>
         <div className="grid2 eq-cards">
           <Card title="Sekolah & yuran">
@@ -110,6 +111,23 @@ export default function Settings() {
           </div>
         </div>
       </Card>
+    </>
+  )
+}
+
+/** Tetapan: "Umum" for those allowed to change settings, "Akses pengguna" for the administrator only. */
+export default function Settings() {
+  const r = useRole()
+  const tabs: ['umum' | 'akses', string][] = [
+    ...(r.can('tetapan') ? [['umum', 'Umum'] as ['umum', string]] : []),
+    ...(r.isAdmin ? [['akses', 'Akses pengguna'] as ['akses', string]] : []),
+  ]
+  const [tab, setTab] = useState<'umum' | 'akses'>(tabs[0]?.[0] ?? 'umum')
+  return (
+    <>
+      <PageHead title="Tetapan" sub={tab === 'akses' ? 'Tentukan apa yang boleh diubah oleh setiap peranan pengguna.' : 'Sekolah, yuran, akaun bank dan format resit.'} />
+      {tabs.length > 1 && <Seg value={tab} onChange={setTab} options={tabs} />}
+      {tab === 'akses' && r.isAdmin ? <AccessSettings /> : <GeneralSettings />}
     </>
   )
 }

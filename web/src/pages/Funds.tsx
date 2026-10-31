@@ -53,7 +53,8 @@ export default function Funds() {
   }, [txns])
   const maxCat = byCat[0]?.[1] ?? 1
 
-  const canProg = r.isStaff || r.role === 'panitia'
+  const canFin = r.can('kewangan')
+  const canProg = canFin || r.role === 'panitia'
 
   return (
     <>
@@ -63,7 +64,7 @@ export default function Funds() {
             <select value={year} onChange={(e) => setYear(Number(e.target.value))}>
               {[0, 1, 2].map((d) => { const y = (settings?.current_year ?? year) - d; return <option key={y} value={y}>{y}</option> })}
             </select>
-            {r.isStaff && <button className="btn" onClick={() => setAddTxn(true)}>+ Transaksi</button>}
+            {canFin && <button className="btn" onClick={() => setAddTxn(true)}>+ Transaksi</button>}
             {canProg && <button className="btn primary" onClick={() => setEditProg('new')}>+ Program</button>}
           </>
         } />
@@ -98,7 +99,7 @@ export default function Funds() {
               {progs.map((p) => {
                 const spent = spentBy[p.id] ?? 0
                 return (
-                  <li key={p.id} className="prog" onClick={() => (r.isStaff || p.created_by === profile?.id) && setEditProg(p)}>
+                  <li key={p.id} className="prog" onClick={() => (canFin || p.created_by === profile?.id) && setEditProg(p)}>
                     <div>
                       <strong>{p.title}</strong> <Badge tone={progLabel[p.status][1]}>{progLabel[p.status][0]}</Badge>
                       <div className="muted small">
@@ -149,7 +150,7 @@ function ProgramModal({ prog, onClose, onDone }: { prog: Program | null; onClose
   const submit = (e: FormEvent) => { e.preventDefault(); run(async () => {
     const body = { ...f, budget: Number(f.budget || 0), start_date: f.start_date || null, end_date: f.end_date || null }
     if (prog) check(await supabase.from('programs').update(body).eq('id', prog.id))
-    else check(await supabase.from('programs').insert({ ...body, status: r.isStaff ? f.status : 'dirancang', created_by: profile!.id }))
+    else check(await supabase.from('programs').insert({ ...body, status: r.can('kewangan') ? f.status : 'dirancang', created_by: profile!.id }))
     onDone()
   }, 'Program disimpan.') }
   return (
@@ -165,7 +166,7 @@ function ProgramModal({ prog, onClose, onDone }: { prog: Program | null; onClose
           <Field label="Bajet (RM)"><input type="number" min="0" step="0.01" value={f.budget} onChange={(e) => setF({ ...f, budget: e.target.value })} /></Field>
           <Field label="Panitia / unit"><input value={f.panitia} onChange={(e) => setF({ ...f, panitia: e.target.value })} /></Field>
         </div>
-        {r.isStaff && (
+        {r.can('kewangan') && (
           <Field label="Status">
             <select value={f.status} onChange={(e) => setF({ ...f, status: e.target.value })}>
               {Object.entries(progLabel).map(([k, [l]]) => <option key={k} value={k}>{l}</option>)}

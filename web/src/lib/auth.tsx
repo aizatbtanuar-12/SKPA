@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { supabase, type Profile, type Settings, type ClassRow } from './supabase'
+import type { Perm } from './perms'
 
 interface AuthState {
   session: Session | null
@@ -8,6 +9,8 @@ interface AuthState {
   settings: Settings | null
   classes: ClassRow[]
   familyId: number | null
+  /** permissions of my role; null = access settings not installed yet (migration 010) */
+  perms: Set<string> | null
   loading: boolean
   error: string | null
   refresh: () => Promise<void>
@@ -22,6 +25,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<Settings | null>(null)
   const [classes, setClasses] = useState<ClassRow[]>([])
   const [familyId, setFamilyId] = useState<number | null>(null)
+  const [perms, setPerms] = useState<Set<string> | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -50,6 +54,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSettings((st.data as Settings) ?? null)
       setClasses((cl.data as ClassRow[]) ?? [])
       setFamilyId((fam.data as number | null) ?? null)
+      const role = (p.data as Profile).role
+      if (role === 'admin' || role === 'parent') setPerms(new Set())
+      else {
+        const rp = await supabase.from('role_permissions').select('perm').eq('role', role).eq('allowed', true)
+        setPerms(rp.error ? null : new Set(((rp.data ?? []) as { perm: string }[]).map((x) => x.perm)))
+      }
     } catch (e) {
       setProfile(null)
       setError(e instanceof Error ? e.message : String(e))
@@ -67,7 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [load])
 
   const value: AuthState = {
-    session, profile, settings, classes, familyId, loading, error,
+    session, profile, settings, classes, familyId, perms, loading, error,
     refresh: () => load(session),
     signOut: async () => { await supabase.auth.signOut() },
   }
@@ -77,19 +87,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 export const useAuth = () => useContext(Ctx)
 
 export function useRole() {
-  const { profile, classes } = useAuth()
+  const { profile, classes, perms } = useAuth()
   const role = profile?.role ?? 'parent'
-  const isStaff = role === 'admin' || role === 'pengerusi' || role === 'pibg'
+  /** committee: may view records (changes need a permission) */
+  const isStaff = role === 'admin' || role === 'pengerusi' || role === 'bendahari' || role === 'pibg'
+  const isAdmin = role === 'admin'
   const isTeacher = role === 'guru'
   const myClasses = classes.filter((c) => c.class_teacher_id === profile?.id)
+  /** administrator-assigned permission (Tetapan → Akses pengguna). Before migration 010 the committee keeps full access. */
+  const can = (p: Perm) => isAdmin || (perms ? perms.has(p) : isStaff)
   return {
-    role, isStaff, isTeacher, myClasses,
-    isAdmin: role === 'admin',
+    role, isStaff, isTeacher, myClasses, isAdmin, can,
     isParent: role === 'parent',
-    /** parent functions (Anak Saya, Yuran, vote as a family): parents, and the PIBG chairman / committee / admin who are parents too */
+    /** parent functions (Anak Saya, Yuran, vote as a family): parents, and the PIBG committee / admin who are parents too */
     hasFamily: role === 'parent' || isStaff,
     isSchoolStaff: role !== 'parent',
-    canPostMemo: isStaff || role === 'panitia' || (isTeacher && myClasses.length > 0),
-    canVerify: isStaff || myClasses.length > 0,
+    canPostMemo: can('memo_semua') || (isTeacher && myClasses.length > 0),
+    canVerify: can('sahkan_murid') || myClasses.length > 0,
   }
 }

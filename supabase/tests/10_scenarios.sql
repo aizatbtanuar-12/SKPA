@@ -12,7 +12,7 @@ insert into auth.users (id, email, raw_user_meta_data) values
  ('00000000-0000-0000-0000-0000000000e2','siti@x','{"full_name":"Siti binti Omar","ic_no":"820202-10-2222"}'),
  ('00000000-0000-0000-0000-0000000000e3','imposter@x','{"full_name":"Orang Lain","ic_no":"800101101111"}');
 update profiles set role='admin' where id='00000000-0000-0000-0000-00000000000a';
-update profiles set role='pibg'  where id='00000000-0000-0000-0000-00000000000b';
+update profiles set role='pengerusi' where id='00000000-0000-0000-0000-00000000000b';
 update profiles set role='guru'  where id in ('00000000-0000-0000-0000-00000000000c','00000000-0000-0000-0000-00000000000d');
 select full_name, ic_no, role from profiles order by full_name;
 

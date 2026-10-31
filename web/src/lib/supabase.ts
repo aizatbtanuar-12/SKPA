@@ -9,7 +9,7 @@ export const supabase = createClient(url || 'http://localhost', key || 'missing-
   auth: { persistSession: true, autoRefreshToken: true },
 })
 
-export type Role = 'admin' | 'pengerusi' | 'pibg' | 'panitia' | 'guru' | 'parent'
+export type Role = 'admin' | 'pengerusi' | 'bendahari' | 'pibg' | 'panitia' | 'guru' | 'parent'
 
 export interface Profile {
   id: string

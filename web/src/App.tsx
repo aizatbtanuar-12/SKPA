@@ -21,6 +21,7 @@ import PaymentReview from './pages/staff/PaymentReview'
 import Import from './pages/staff/Import'
 import Users from './pages/admin/Users'
 import Settings from './pages/admin/Settings'
+import Reports from './pages/Reports'
 import Donations from './pages/Donations'
 import DonationCampaign from './pages/DonationCampaign'
 import DonationReceipt from './pages/DonationReceipt'
@@ -68,18 +69,19 @@ function Routed() {
         <Route path="/sumbangan" element={<Donations />} />
         <Route path="/sumbangan/:id" element={<DonationCampaign />} />
         <Route path="/resit-sumbangan/:id" element={<DonationReceipt />} />
-        <Route path="/kempen" element={<Guard ok={r.isStaff}><Campaigns /></Guard>} />
-        <Route path="/kempen/:id" element={<Guard ok={r.isStaff}><CampaignManage /></Guard>} />
+        <Route path="/kempen" element={<Guard ok={r.can('kempen') || r.can('semak_sumbangan')}><Campaigns /></Guard>} />
+        <Route path="/kempen/:id" element={<Guard ok={r.can('kempen') || r.can('semak_sumbangan')}><CampaignManage /></Guard>} />
         <Route path="/anak" element={<Guard ok={r.hasFamily}><MyChildren /></Guard>} />
         <Route path="/yuran" element={<Guard ok={r.hasFamily}><ParentFees /></Guard>} />
         <Route path="/pengesahan" element={<Guard ok={r.canVerify}><Verify /></Guard>} />
         <Route path="/kelas" element={<Guard ok={r.isTeacher}><MyClass /></Guard>} />
-        <Route path="/rekod" element={<Guard ok={r.isStaff}><Records /></Guard>} />
-        <Route path="/kutipan" element={<Guard ok={r.isStaff}><Collection /></Guard>} />
-        <Route path="/semakan-bayaran" element={<Guard ok={r.isStaff}><PaymentReview /></Guard>} />
-        <Route path="/import" element={<Guard ok={r.isStaff}><Import /></Guard>} />
+        <Route path="/rekod" element={<Guard ok={r.can('rekod_urus')}><Records /></Guard>} />
+        <Route path="/kutipan" element={<Guard ok={r.can('kutipan_yuran')}><Collection /></Guard>} />
+        <Route path="/semakan-bayaran" element={<Guard ok={r.can('semak_bayaran')}><PaymentReview /></Guard>} />
+        <Route path="/import" element={<Guard ok={r.can('import')}><Import /></Guard>} />
         <Route path="/pengguna" element={<Guard ok={r.isAdmin}><Users /></Guard>} />
-        <Route path="/tetapan" element={<Guard ok={r.isStaff}><Settings /></Guard>} />
+        <Route path="/tetapan" element={<Guard ok={r.isAdmin || r.can('tetapan')}><Settings /></Guard>} />
+        <Route path="/laporan" element={<Guard ok={r.can('laporan')}><Reports /></Guard>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Layout>
