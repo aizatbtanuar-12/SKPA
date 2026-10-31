@@ -64,8 +64,8 @@ export default function ParentAgm() {
   }, 'Undian anda telah direkod.')
 
   const head = <PageHead title={mobile ? 'Mesyuarat Agung' : 'Mesyuarat Agung PIBG'} sub="Satu kehadiran & satu undi bagi setiap keluarga" />
-  if (meeting === undefined) return <>{head}<div className="pempty">Memuatkan…</div></>
-  if (!meeting) return <>{head}<div className="pcard pempty">Belum ada mesyuarat dijadualkan.</div></>
+  if (meeting === undefined) return <>{head}<div key="empty" className="pempty">Memuatkan…</div></>
+  if (!meeting) return <>{head}<div key="empty" className="pcard pempty">Belum ada mesyuarat dijadualkan.</div></>
 
   const open = meeting.status === 'dibuka'
   const quorum = stats?.quorum || meeting.quorum
@@ -118,7 +118,7 @@ export default function ParentAgm() {
         )
       })()}
     </div>
-  ) : <div className="pcard pempty">Tiada usul lagi.</div>
+  ) : <div key="empty" className="pcard pempty">Tiada usul lagi.</div>
 
   const nav = motions.length > 1 && (
     <div className="motion-nav">

@@ -3,9 +3,10 @@ import { Link } from 'react-router-dom'
 import { supabase, check } from '../../lib/supabase'
 import { useAuth } from '../../lib/auth'
 import { PageHead } from '../../components/Layout'
-import { Badge, Card, Empty, Field, Modal, Stat, useAction } from '../../components/ui'
+import { Badge, Card, Field, Modal, Stat, useAction } from '../../components/ui'
 import { download, feeStatusLabel, feeStatusTone, rm, toCSV } from '../../lib/util'
 import type { FeeStatus } from '../Dashboard'
+import { DataTable } from '../../components/DataTable'
 
 export default function Collection() {
   const { settings, classes } = useAuth()
@@ -70,26 +71,19 @@ export default function Collection() {
         </div>
       </div>
       <Card>
-        {shown.length ? (
-          <table className="table">
-            <thead><tr><th>Kod</th><th>Anak</th><th>Penjaga</th><th className="num">Dibayar</th><th>Status</th><th /></tr></thead>
-            <tbody>
-              {shown.map((r) => (
-                <tr key={r.family_id}>
-                  <td className="mono">{r.family_code}</td>
-                  <td className="small">{r.children}</td>
-                  <td className="small">{r.guardians}<div className="muted">{r.phone}</div></td>
-                  <td className="num">{rm(r.paid)}</td>
-                  <td><Badge tone={feeStatusTone[r.status]}>{feeStatusLabel[r.status]}</Badge></td>
-                  <td>
-                    {r.status === 'menunggu' && <Link to="/semakan-bayaran" className="btn ghost small">Semak</Link>}
-                    {r.status !== 'lunas' && <button className="btn small" onClick={() => setPay(r)}>Rekod bayaran</button>}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : <Empty>Tiada keluarga.</Empty>}
+        <DataTable rows={shown} rowKey={(r) => r.family_id} pageSize={15} resetKey={`${filter}|${cls}|${q}`}
+          initialSort={{ key: 'kod', dir: 'asc' }} empty="Tiada keluarga."
+          cols={[
+            { key: 'kod', label: 'Kod', sort: (r) => r.family_code, className: 'mono', render: (r) => r.family_code },
+            { key: 'anak', label: 'Anak', sort: (r) => r.children, className: 'small', render: (r) => r.children },
+            { key: 'penjaga', label: 'Penjaga', sort: (r) => r.guardians, className: 'small', render: (r) => <>{r.guardians}<div className="muted">{r.phone}</div></> },
+            { key: 'dibayar', label: 'Dibayar', num: true, sort: (r) => Number(r.paid), render: (r) => rm(r.paid) },
+            { key: 'status', label: 'Status', sort: (r) => feeStatusLabel[r.status], render: (r) => <Badge tone={feeStatusTone[r.status]}>{feeStatusLabel[r.status]}</Badge> },
+            { key: 'aksi', label: '', render: (r) => <div className="row-actions">
+              {r.status === 'menunggu' && <Link to="/semakan-bayaran" className="btn ghost small">Semak</Link>}
+              {r.status !== 'lunas' && <button className="btn small" onClick={() => setPay(r)}>Rekod bayaran</button>}
+            </div> },
+          ]} />
       </Card>
       {pay && <RecordPayment fam={pay} onClose={() => setPay(null)} onDone={() => { setPay(null); load() }} />}
     </>

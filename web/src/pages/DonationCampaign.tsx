@@ -8,6 +8,7 @@ import { readReceipt, type ReceiptInfo } from '../lib/receiptOcr'
 import { compressImage } from '../lib/image'
 import { campaignStatus, daysLeft, loadProgress, pct, posterUrl, transferRemark, type Campaign, type Donation, type Progress } from '../lib/donations'
 import { date, dateTime, payLabel, payTone, rm } from '../lib/util'
+import { DataTable } from '../components/DataTable'
 
 export default function DonationCampaign() {
   const { id } = useParams()
@@ -162,21 +163,14 @@ export default function DonationCampaign() {
       </div>
 
       <Card title="Sumbangan saya">
-        {mine.length ? (
-          <table className="table">
-            <thead><tr><th>Tarikh</th><th className="num">Jumlah</th><th>Status</th><th>Resit</th></tr></thead>
-            <tbody>
-              {mine.map((d) => (
-                <tr key={d.id}>
-                  <td>{dateTime(d.submitted_at)}</td>
-                  <td className="num">{rm(d.amount)}</td>
-                  <td><Badge tone={payTone[d.status]}>{payLabel[d.status]}</Badge>{d.status === 'ditolak' && d.review_note && <div className="muted small">{d.review_note}</div>}</td>
-                  <td>{d.receipt_no ? <Link className="link mono small" to={`/resit-sumbangan/${d.id}`}>{d.receipt_no}</Link> : '-'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : <Empty>Anda belum menyumbang untuk kutipan ini.</Empty>}
+        <DataTable rows={mine} rowKey={(d) => d.id} pageSize={5} initialSort={{ key: 'tarikh', dir: 'desc' }}
+          empty="Anda belum menyumbang untuk kutipan ini."
+          cols={[
+            { key: 'tarikh', label: 'Tarikh', sort: (d) => d.submitted_at, render: (d) => dateTime(d.submitted_at) },
+            { key: 'jumlah', label: 'Jumlah', num: true, sort: (d) => Number(d.amount), render: (d) => rm(d.amount) },
+            { key: 'status', label: 'Status', sort: (d) => payLabel[d.status], render: (d) => <><Badge tone={payTone[d.status]}>{payLabel[d.status]}</Badge>{d.status === 'ditolak' && d.review_note && <div className="muted small">{d.review_note}</div>}</> },
+            { key: 'resit', label: 'Resit', sort: (d) => d.receipt_no, render: (d) => (d.receipt_no ? <Link className="link mono small" to={`/resit-sumbangan/${d.id}`}>{d.receipt_no}</Link> : '-') },
+          ]} />
       </Card>
     </>
   )

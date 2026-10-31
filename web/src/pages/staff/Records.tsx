@@ -2,8 +2,9 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { supabase, check } from '../../lib/supabase'
 import { useAuth } from '../../lib/auth'
 import { PageHead } from '../../components/Layout'
-import { Badge, Card, Empty, Field, Modal, useAction } from '../../components/ui'
+import { Badge, Card, Field, Modal, useAction } from '../../components/ui'
 import { fmtIC, normIC, relationLabel, validIC } from '../../lib/util'
+import { DataTable } from '../../components/DataTable'
 
 interface Guardian { id: number; full_name: string; ic_no: string | null; phone: string | null; user_id: string | null; family_id: number | null }
 interface Student {
@@ -55,28 +56,20 @@ export default function Records() {
         </select>
       </div>
       <Card>
-        {rows.length ? (
-          <table className="table hover">
-            <thead><tr><th>Nama murid</th><th>Kelas</th><th>Ibu bapa / penjaga</th><th>Keluarga</th></tr></thead>
-            <tbody>
-              {rows.map((s) => (
-                <tr key={s.id} onClick={() => setEdit(s)}>
-                  <td><strong>{s.full_name}</strong><div className="muted small">{fmtIC(s.ic_no)}</div></td>
-                  <td>{className(s.class_id)}{s.status === 'keluar' && <> <Badge tone="grey">Keluar</Badge></>}</td>
-                  <td>
-                    {s.student_guardians.length ? s.student_guardians.map((g) => (
-                      <div key={g.guardians.id} className="small">
-                        {g.guardians.full_name} <span className="muted">({relationLabel[g.relation]})</span>
-                        {!g.guardians.ic_no && <Badge tone="amber">tiada No. KP</Badge>}
-                      </div>
-                    )) : <Badge tone="amber">Tiada penjaga</Badge>}
-                  </td>
-                  <td className="mono">{s.families?.family_code}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : <Empty>Tiada rekod. Import senarai murid atau tambah secara manual.</Empty>}
+        <DataTable rows={rows} rowKey={(s) => s.id} pageSize={20} resetKey={rows} onRowClick={(s) => setEdit(s)}
+          initialSort={{ key: 'nama', dir: 'asc' }} empty="Tiada rekod. Import senarai murid atau tambah secara manual."
+          cols={[
+            { key: 'nama', label: 'Nama murid', sort: (s) => s.full_name, render: (s) => <><strong>{s.full_name}</strong><div className="muted small">{fmtIC(s.ic_no)}</div></> },
+            { key: 'kelas', label: 'Kelas', sort: (s) => className(s.class_id), render: (s) => <>{className(s.class_id)}{s.status === 'keluar' && <> <Badge tone="grey">Keluar</Badge></>}</> },
+            { key: 'penjaga', label: 'Ibu bapa / penjaga', sort: (s) => s.student_guardians[0]?.guardians.full_name, render: (s) => (
+              s.student_guardians.length ? s.student_guardians.map((g) => (
+                <div key={g.guardians.id} className="small">
+                  {g.guardians.full_name} <span className="muted">({relationLabel[g.relation]})</span>
+                  {!g.guardians.ic_no && <Badge tone="amber">tiada No. KP</Badge>}
+                </div>
+              )) : <Badge tone="amber">Tiada penjaga</Badge>) },
+            { key: 'kod', label: 'Keluarga', sort: (s) => s.families?.family_code, className: 'mono', render: (s) => s.families?.family_code },
+          ]} />
         {rows.length === 500 && <p className="muted small">Menunjukkan 500 rekod pertama. Gunakan carian atau tapisan kelas.</p>}
       </Card>
       {edit && <StudentModal student={edit === 'new' ? null : edit} onClose={() => setEdit(null)} onSaved={() => { setEdit(null); load() }} />}

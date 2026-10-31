@@ -74,7 +74,7 @@ export default function ParentFunds() {
             </div>
           ))}
         </div>
-      ) : <div className="pempty">Belum ada perbelanjaan direkodkan.</div>}
+      ) : <div key="empty" className="pempty">Belum ada perbelanjaan direkodkan.</div>}
     </div>
   )
 
@@ -95,7 +95,7 @@ export default function ParentFunds() {
             <PPager page={prog.page} pages={prog.pages} onChange={prog.setPage} />
           </div>
         </>
-      ) : <div className="pempty">Belum ada program.</div>}
+      ) : <div key="empty" className="pempty">Belum ada program.</div>}
     </div>
   )
 
@@ -120,7 +120,7 @@ export default function ParentFunds() {
             <span className={`a ${io}`}>{io === 'in' ? '+' : '−'}{shortRM(t.amount)}</span>
           </div>
         )
-      }) : <div className="pempty">Tiada transaksi selain kutipan yuran.</div>}
+      }) : <div key="empty" className="pempty">Tiada transaksi selain kutipan yuran.</div>}
       <PPager page={tx.page} pages={tx.pages} onChange={tx.setPage} variant={mobile ? 'label' : 'text'} />
       {mobile && <p className="muted" style={{ fontSize: 12, margin: '12px 0 0' }}>Kutipan yuran dikira automatik daripada bayaran yang diluluskan.</p>}
     </div>

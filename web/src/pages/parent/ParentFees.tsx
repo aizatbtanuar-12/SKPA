@@ -88,7 +88,7 @@ export default function ParentFees() {
       </>
     )
   }
-  if (!fee) return <div className="pempty">Memuatkan…</div>
+  if (!fee) return <div key="empty" className="pempty">Memuatkan…</div>
 
   // ---------- panels ----------
   const famCard = (
@@ -236,7 +236,7 @@ export default function ParentFees() {
             </div>
           ))}
         </div>
-      ) : <div className="pcard pempty">Belum ada bayaran.</div>}
+      ) : <div key="empty" className="pcard pempty">Belum ada bayaran.</div>}
       <PPager page={hist.page} pages={hist.pages} onChange={hist.setPage} variant={mobile ? 'dots' : 'text'} />
     </div>
   )
