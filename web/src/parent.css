@@ -183,7 +183,7 @@ body.parent-ui .toast.err { background: #b3352b; }
 .memo-card .title { font-size: 16px; font-weight: 800; margin-top: 10px; line-height: 1.3; }
 .memo-card .by { font-size: 12px; font-weight: 600; opacity: .65; margin-top: auto; padding-top: 12px; }
 .ring { width: 68px; height: 68px; border-radius: 50%; display: grid; place-items: center; flex-shrink: 0; }
-.ring > span { width: 50px; height: 50px; border-radius: 50%; background: #fff; display: grid; place-items: center; font-size: 14px; font-weight: 800; }
+.ring > span { width: 50px; height: 50px; border-radius: 50%; background: #fff; display: grid; place-items: center; font-size: 14px; font-weight: 800; white-space: nowrap; letter-spacing: -.02em; }
 .ring.lg { width: 96px; height: 96px; } .ring.lg > span { width: 72px; height: 72px; font-size: 18px; }
 .ring-row { display: flex; align-items: center; gap: 14px; }
 .ring-row b { display: block; font-size: 15px; }
@@ -355,7 +355,151 @@ body.parent-ui .toast.err { background: #b3352b; }
 .claim-card .r { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
 .claim-card .r button { background: none; border: 0; font: inherit; font-size: 12px; font-weight: 700; color: var(--muted); cursor: pointer; }
 
-/* other pages rendered inside the parent shell keep their own styles; give them breathing room */
-.pshell .card { border-radius: 20px; }
 .memo-carousel { scroll-padding-inline: 16px; }
 .ph select { width: auto; }
+
+/* =====================================================================
+   Illustrated quick-action tiles
+   ===================================================================== */
+.quick .tile { position: relative; overflow: visible; }
+.quick .tile img { width: 50px; height: 50px; object-fit: contain; }
+.dquick a { position: relative; color: var(--ink); }
+.dquick .ico { width: 60px; height: 60px; border-radius: 18px; background: rgba(255,255,255,.75); }
+.dquick .ico img { width: 50px; height: 50px; object-fit: contain; }
+.qbadge { position: absolute; top: -6px; right: -6px; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 99px; background: var(--logo-red); color: #fff; font-style: normal; font-size: 11px; font-weight: 800; display: grid; place-items: center; box-shadow: 0 0 0 2px #fff; }
+.dquick .qbadge { position: static; margin-left: auto; box-shadow: none; }
+
+/* equal-height cards (Laman Utama: memo + dana) */
+.pgrid.eq { align-items: stretch; }
+.pgrid.eq > .pcard { display: flex; flex-direction: column; }
+.pgrid.eq .dana-card .ring-row { flex: 1; }
+.pgrid.eq .dana-card .mini-tiles { margin-top: auto; padding-top: 14px; }
+
+/* staff home: to-do card */
+.todo-list { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
+.todo-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 12px; border-radius: 14px; background: var(--bg); text-decoration: none; color: var(--ink); }
+.todo-row:hover { background: var(--brand-soft); }
+.todo-row b { display: block; font-size: 14px; }
+.todo-row span { font-size: 12px; color: var(--muted); }
+.todo-n { min-width: 34px; height: 30px; padding: 0 10px; border-radius: 10px; background: #fff; display: grid; place-items: center; font-weight: 800; font-size: 14px !important; color: var(--ink) !important; }
+.todo-n.hot { background: var(--accent); color: var(--brand-dark) !important; }
+.big-amount + .caption { margin-bottom: 2px; }
+
+/* mobile menu sheet (staff & teachers) */
+button.ptab { background: none; border: 0; font: inherit; font-size: 11px; font-weight: 700; cursor: pointer; padding: 0; }
+.ptab .pill { position: relative; }
+.ptab .pill .dot { position: absolute; top: 3px; right: 12px; width: 8px; height: 8px; border-radius: 50%; background: var(--logo-red); }
+.menu-back { z-index: 25; padding-bottom: calc(82px + env(safe-area-inset-bottom)); }
+.menu-sheet { max-height: calc(100vh - 140px); }
+.menu-who { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 18px; background: var(--brand-dark); color: #fff; text-decoration: none; }
+.menu-who strong { display: block; font-size: 15px; }
+.menu-who span { font-size: 12px; opacity: .75; }
+.menu-sheet .pside-title { color: var(--muted); opacity: 1; padding-left: 2px; }
+.menu-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.menu-link { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 8px 12px; border-radius: 14px; background: var(--bg); color: var(--ink); text-decoration: none; font-size: 13px; font-weight: 700; line-height: 1.25; }
+.menu-link .ico { width: 30px; height: 30px; border-radius: 10px; background: #fff; display: grid; place-items: center; flex-shrink: 0; }
+.menu-link.active { background: var(--brand-soft); color: var(--brand); }
+.menu-link .count { margin-left: auto; min-width: 20px; height: 20px; border-radius: 99px; background: var(--logo-red); color: #fff; font-size: 11px; display: grid; place-items: center; padding: 0 6px; }
+
+/* =====================================================================
+   Committee / teacher / admin pages inside the same shell.
+   They are built from the shared primitives (Card, Stat, .btn, .table…);
+   these rules give them the redesign's look.
+   ===================================================================== */
+.pshell .page-head-x .ph-row { align-items: flex-end; }
+.pshell .ph-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.pshell .ph p .badge, .pshell .ph p .pbadge { vertical-align: middle; }
+
+.pshell .card { background: #fff; border: 1px solid var(--line); border-radius: 24px; padding: 18px; box-shadow: none; margin-bottom: 16px; }
+@media (min-width: 760px) { .pshell .card { padding: 22px 24px; } }
+.pshell .card-head { margin-bottom: 14px; }
+.pshell .card-head h2 { font-size: 18px; font-weight: 800; letter-spacing: -.01em; }
+@media (min-width: 760px) { .pshell .card-head h2 { font-size: 20px; } }
+.pshell .grid2 { gap: 16px; margin-bottom: 16px; align-items: start; }
+.pshell .grid2 > .card { margin-bottom: 0; }
+
+.pshell .btn { border-radius: 12px; font-weight: 700; padding: 0 16px; min-height: 42px; border-color: var(--input-line); }
+.pshell .btn.small { min-height: 32px; padding: 0 12px; border-radius: 10px; font-size: 13px; }
+.pshell .btn.primary { background: var(--brand); border-color: var(--brand); }
+.pshell .btn.primary:hover { background: var(--brand-dark); }
+.pshell .btn.ghost { border-color: transparent; }
+.pshell .link { font-weight: 700; }
+
+.pshell input:not([type=checkbox]):not([type=radio]):not([type=file]), .pshell select, .pshell textarea { border-radius: 12px; border-color: var(--input-line); }
+.pshell input:not([type=checkbox]):not([type=radio]):not([type=file]), .pshell select { height: 44px; }
+.pshell .table td select, .pshell .table td input { height: 34px !important; border-radius: 10px; }
+.pshell input[type=file] { border-radius: 12px; border: 2px dashed #c3d3ee; background: #f3f6fc; padding: 10px; }
+.pshell .field > span { font-size: 13px; font-weight: 700; }
+
+/* compact tinted stat tiles (same scale as the Laman Utama quick tiles) */
+.pshell .stats { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 16px; }
+.pshell .stat, .pshell .card .stat { background: var(--t-blue); color: var(--i-blue); border: 0; border-radius: 18px; padding: 12px 14px; gap: 0; }
+.pshell .stat.green, .pshell .card .stat.green { background: var(--t-green); color: var(--i-green); }
+.pshell .stat.amber, .pshell .card .stat.amber { background: var(--t-gold); color: var(--i-gold); }
+.pshell .stat.red, .pshell .card .stat.red { background: var(--t-red); color: var(--i-red); }
+.pshell .stat-label { font-size: 12px; font-weight: 700; color: inherit; opacity: .8; }
+.pshell .stat-value { font-size: 20px; font-weight: 800; letter-spacing: -.01em; color: inherit !important; line-height: 1.3; }
+.pshell .stat-sub { font-size: 11px; color: inherit; opacity: .75; }
+.pshell .stat-link .stat { transition: transform .15s; }
+.pshell .stat-link .stat:hover { transform: translateY(-2px); }
+.pshell .stats.tight { margin-bottom: 12px; }
+@media (min-width: 760px) { .pshell .stat-value { font-size: 22px; } }
+
+.pshell .table { font-size: 14px; }
+.pshell .table th { font-size: 11px; font-weight: 800; letter-spacing: .06em; padding: 10px; border-bottom: 1px solid var(--line); }
+.pshell .table td { padding: 12px 10px; vertical-align: middle; }
+.pshell .table.hover tbody tr:hover { background: var(--bg); }
+.pshell .badge { padding: 4px 10px; font-size: 12px; font-weight: 700; }
+.pshell .badge.amber { background: #fdf1dc; color: #8a5200; }
+.pshell .badge.green { background: #e3f5ea; color: #145c35; }
+
+.pshell .seg, .pshell .tabs { background: var(--seg); border-radius: 14px; padding: 4px; }
+.pshell .seg button, .pshell .tabs button { border-radius: 11px; font-size: 13px; font-weight: 700; padding: 8px 14px; }
+.pshell .seg button.on, .pshell .tabs button.on { box-shadow: 0 1px 3px rgba(20,49,94,.14); }
+
+.pshell .callout { background: var(--brand-soft); border: 0; border-radius: 20px; padding: 16px 18px; }
+.pshell .alert { border-radius: 12px; }
+.pshell .ocr-box, .pshell .remark-box { border-radius: 14px; }
+.pshell .remark { border-radius: 10px; }
+.pshell .list li { padding: 12px 0; }
+.pshell .memo { border-radius: 20px; }
+.pshell .motion, .pshell .choice { border-radius: 16px; }
+.pshell .progress { background: var(--track); }
+.pshell .progress > span { display: block; height: 100%; background: var(--brand); border-radius: 99px; }
+.pshell .stat .progress { background: rgba(255,255,255,.6); }
+.pshell .stat .progress > span { background: currentColor; }
+.pshell .campaign { border-radius: 22px; box-shadow: none; }
+.pshell .campaign-hero { border-radius: 22px; }
+.pshell .receipt { border-radius: 20px; }
+.pshell .modal { border-radius: 24px; padding: 22px 24px; }
+.pshell .modal h2 { font-size: 20px; font-weight: 800; }
+.pshell .pager button { border-radius: 12px; }
+.pshell .dl { font-size: 14px; }
+
+/* =====================================================================
+   Donation drive page: stat tiles on top, poster on the left,
+   "1. transfer" and "2. upload" stacked beside it
+   ===================================================================== */
+.campaign-layout { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 16px; align-items: start; margin-bottom: 16px; }
+.campaign-layout.no-poster { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.campaign-side { display: flex; flex-direction: column; gap: 16px; position: sticky; top: 24px; }
+.campaign-side .card { margin-bottom: 0; }
+.campaign-main > .card:last-child { margin-bottom: 0; }
+.campaign-layout .campaign-hero { max-height: none; }
+@media (max-width: 900px) {
+  .campaign-layout, .campaign-layout.no-poster { grid-template-columns: 1fr; }
+  .campaign-side { position: static; }
+}
+.memo-carousel { scroll-padding-inline: 16px; }
+.ph select { width: auto; }
+
+@media print {
+  .pside, .ptabbar, .no-print, .toasts { display: none !important; }
+  .pshell, .pshell.mob { background: #fff; padding: 0; }
+  .pmain, .pmob-page { padding: 0; }
+  .pcontent { max-width: none; }
+  .up { animation: none; }
+}
+.pshell .grid2.eq-cards { align-items: stretch; }
+.pshell .grid2.eq-cards > .card { height: 100%; }
+.pshell .table td .btn + .btn, .pshell .row-actions .btn { margin-left: 4px; }

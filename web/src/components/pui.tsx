@@ -1,5 +1,6 @@
 /* Building blocks for the redesigned parent screens (see parent.css) */
 import { useEffect, useState, type ReactNode } from 'react'
+import { Link } from 'react-router-dom'
 
 export function useIsMobile() {
   const q = '(max-width: 759px)'
@@ -61,7 +62,35 @@ export function Ring({ pct, large }: { pct: number; large?: boolean }) {
   return (
     <div className={`ring ${large ? 'lg' : ''}`} style={{ background: `conic-gradient(var(--brand) ${p * 3.6}deg, var(--track) 0)` }}
       role="img" aria-label={`${p} peratus`}>
-      <span>{p}%</span>
+      <span translate="no">{`${p}%`}</span>
+    </div>
+  )
+}
+
+/** Quick-action tiles: illustrated icons in tinted squares (row of 4 on phones, cards on desktop) */
+export interface QuickTile { to: string; state?: unknown; img: string; label: string; tint: 't-gold' | 't-blue' | 't-red' | 't-green'; badge?: number }
+export function QuickTiles({ tiles, mobile }: { tiles: QuickTile[]; mobile: boolean }) {
+  if (mobile) {
+    return (
+      <div className="quick">
+        {tiles.map((t) => (
+          <Link key={t.to + t.label} to={t.to} state={t.state}>
+            <span className={`tile ${t.tint}`} aria-hidden="true"><img src={t.img} alt="" />{t.badge ? <i className="qbadge">{t.badge}</i> : null}</span>
+            {t.label}
+          </Link>
+        ))}
+      </div>
+    )
+  }
+  return (
+    <div className="dquick">
+      {tiles.map((t) => (
+        <Link key={t.to + t.label} to={t.to} state={t.state} className={t.tint}>
+          <span className="ico" aria-hidden="true"><img src={t.img} alt="" /></span>
+          <span className="lbl">{t.label}</span>
+          {t.badge ? <i className="qbadge">{t.badge}</i> : null}
+        </Link>
+      ))}
     </div>
   )
 }

@@ -37,6 +37,7 @@ You need a free [Supabase](https://supabase.com) account (database + login + fil
 5. New query again → paste `supabase/migrations/004_class_levels.sql` → **Run**. Adds Prasekolah and PPKI classes and class rename/delete.
 6. New query again → paste `supabase/migrations/005_receipt_format.sql` → **Run**. Lets admins customise the receipt (Tetapan → Format resit).
 7. Then `006_donations.sql` and `007_poster_storage.sql`, each → **Run**. Adds donation drives (Kutipan Dana) and poster uploads.
+8. Then `008_family_count.sql` → **Run**. Counts families that have paid or are waiting for their children to be verified in the "x daripada y keluarga" figure.
 
 ### 2. Configure sign-in e-mails (important)
 Supabase's built-in e-mail sender only delivers to your own Supabase team members, and only 2 e-mails per hour. Parents would never receive their confirmation e-mail. Pick one option:
@@ -142,6 +143,7 @@ supabase/migrations/004_class_levels.sql    Prasekolah (0) & PPKI (7) levels, ti
 supabase/migrations/005_receipt_format.sql  receipt header/footer/signature settings
 supabase/migrations/006_donations.sql       donation drives, donations, donation receipts
 supabase/migrations/007_poster_storage.sql  public bucket for drive posters
+supabase/migrations/008_family_count.sql    family count for fund summary / fee status
 supabase/tests/                      scenario tests (12 scenarios)
 web/src/pages/                       one file per screen (parent/, teacher/, staff/, admin/)
 web/src/lib/                         Supabase client, auth/roles, helpers

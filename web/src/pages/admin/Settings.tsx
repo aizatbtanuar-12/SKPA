@@ -50,8 +50,9 @@ export default function Settings() {
   return (
     <>
       <PageHead title="Tetapan" />
-      <form onSubmit={saveMain}>
-        <Card title="Sekolah & yuran">
+      <form onSubmit={saveMain} style={{ marginBottom: 16 }}>
+        <div className="grid2 eq-cards">
+          <Card title="Sekolah & yuran">
           <div className="row gap wrap">
             <Field label="Nama sekolah"><input required value={f.school_name} onChange={set('school_name')} /></Field>
             <Field label="Kod sekolah"><input value={f.school_code} onChange={set('school_code')} /></Field>
@@ -72,8 +73,9 @@ export default function Settings() {
             <Field label="Nama pemegang akaun"><input value={f.bank_holder} onChange={set('bank_holder')} /></Field>
             <Field label="Telefon PIBG"><input value={f.contact_phone} onChange={set('contact_phone')} /></Field>
           </div>
-          <button className="btn primary" disabled={busy}>Simpan tetapan</button>
         </Card>
+        </div>
+        <button className="btn primary" disabled={busy}>Simpan tetapan</button>
       </form>
 
       <Card title="Format resit">
