@@ -125,7 +125,7 @@ export default function ParentHome() {
       <div className="pgrid eq">
         <div className="pcard">
           <div className="pcard-head"><h2>Memo terkini</h2><Link to="/memo">Semua memo →</Link></div>
-          {memos.length ? <div className="memo-grid">{memos.map(memoCard)}</div> : <div className="pempty">Belum ada memo.</div>}
+          {memos.length ? <div className="memo-grid">{memos.map(memoCard)}</div> : <div key="empty" className="pempty">Belum ada memo.</div>}
         </div>
         {danaCard}
       </div>

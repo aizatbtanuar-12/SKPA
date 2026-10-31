@@ -197,7 +197,7 @@ export default function Dashboard() {
       <div className="pgrid eq">
         <div className="pcard">
           <div className="pcard-head"><h2>Memo terkini</h2><Link to="/memo">Semua memo →</Link></div>
-          {memos.length ? <div className="memo-grid">{memos.map((m, i) => <MemoTile key={m.id} m={m} i={i} read={read} />)}</div> : <div className="pempty">Belum ada memo.</div>}
+          {memos.length ? <div className="memo-grid">{memos.map((m, i) => <MemoTile key={m.id} m={m} i={i} read={read} />)}</div> : <div key="empty" className="pempty">Belum ada memo.</div>}
         </div>
         <DanaCard fund={fund} large />
       </div>

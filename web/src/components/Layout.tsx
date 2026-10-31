@@ -4,6 +4,7 @@ import { useAuth, useRole } from '../lib/auth'
 import { roleLabel } from '../lib/util'
 import { Live, initials, useIsMobile } from './pui'
 import { useUnreadMemos } from './useUnreadMemos'
+import ErrorBoundary from './ErrorBoundary'
 
 interface NavItem { to: string; label: string; icon: string; show: boolean; count?: number }
 interface Tab { to: string; label: string; icon: string; match: string[] }
@@ -103,7 +104,7 @@ export default function Layout({ children }: { children: ReactNode }) {
     const menuActive = menu || (!r.isParent && !inTabs.some(isOn))
     return (
       <div className="pshell mob">
-        {loc.pathname === '/' ? children : <div className="pmob-page up" key={loc.pathname}>{children}</div>}
+        <ErrorBoundary resetKey={loc.pathname}>{loc.pathname === '/' ? children : <div className="pmob-page up" key={loc.pathname}>{children}</div>}</ErrorBoundary>
         <nav className="ptabbar" aria-label="Menu utama">
           {tabs.map((t) => (
             <Link key={t.to} to={t.to} className={`ptab ${active(t) ? 'active' : ''}`} aria-current={active(t) ? 'page' : undefined}>
@@ -168,7 +169,7 @@ export default function Layout({ children }: { children: ReactNode }) {
           <button onClick={signOut}>Keluar</button>
         </div>
       </aside>
-      <main className="pmain"><div className="pcontent up" key={loc.pathname}>{children}</div></main>
+      <main className="pmain"><div className="pcontent up" key={loc.pathname}><ErrorBoundary resetKey={loc.pathname}>{children}</ErrorBoundary></div></main>
     </div>
   )
 }

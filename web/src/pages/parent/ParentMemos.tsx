@@ -107,7 +107,7 @@ export default function ParentMemos() {
             )
           })}
         </div>
-      ) : <div className="pcard pempty">{filter === 'baru' ? 'Semua memo telah dibaca. 🎉' : 'Tiada memo.'}</div>}
+      ) : <div key="empty" className="pcard pempty">{filter === 'baru' ? 'Semua memo telah dibaca. 🎉' : 'Tiada memo.'}</div>}
       <PPager page={paged.page} pages={paged.pages} onChange={paged.setPage} variant={mobile ? 'label' : 'text'} />
     </div>
   )

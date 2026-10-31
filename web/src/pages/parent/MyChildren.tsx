@@ -23,6 +23,7 @@ export default function MyChildren() {
   const [claims, setClaims] = useState<Claim[]>([])
   const [kids, setKids] = useState<Child[]>([])
   const [guardians, setGuardians] = useState<Guardian[]>([])
+  const [loaded, setLoaded] = useState(false)
   const [f, setF] = useState({ child_name: '', child_ic: '', class_id: '', relation: profile?.relation ?? 'bapa' })
   useEffect(() => { if (profile?.relation) setF((x) => ({ ...x, relation: profile.relation! })) }, [profile?.relation])
   const { busy, run } = useAction()
@@ -39,6 +40,7 @@ export default function MyChildren() {
       setKids((s.data as unknown as Child[]) ?? [])
       setGuardians((g.data as Guardian[]) ?? [])
     }
+    setLoaded(true)
   }, [profile, familyId])
   useEffect(() => { load() }, [load])
 
@@ -67,8 +69,8 @@ export default function MyChildren() {
 
   const kidsPanel = (
     <div className="up">
-      {kids.length ? (
-        <div className="pstack">
+      {!loaded ? <div key="loading" className="pcard pempty">Memuatkan…</div> : kids.length ? (
+        <div key="list" className="pstack">
           {kids.map((k, i) => {
             const t = KID_TINT[i % 2]
             return (
@@ -85,7 +87,7 @@ export default function MyChildren() {
           })}
         </div>
       ) : (
-        <div className="pcard pempty">
+        <div key="empty" className="pcard pempty">
           Belum ada anak yang disahkan. Tambah anak anda dan tunggu pengesahan guru kelas.
           {mobile && <button className="pbtn" style={{ marginTop: 14 }} onClick={() => setTab('tambah')}>Tambah anak</button>}
         </div>
@@ -140,7 +142,7 @@ export default function MyChildren() {
             </div>
           ))}
         </div>
-      ) : <div className="pcard pempty">Tiada permohonan.</div>}
+      ) : <div key="empty" className="pcard pempty">Tiada permohonan.</div>}
     </div>
   )
 
