@@ -19,6 +19,17 @@ export function Card({ title, actions, children, className = '' }:
 export const Badge = ({ tone = 'grey', children }: { tone?: Tone; children: ReactNode }) =>
   <span className={`badge ${tone}`}>{children}</span>
 
+export function Pager({ page, pages, onChange }: { page: number; pages: number; onChange: (p: number) => void }) {
+  if (pages <= 1) return null
+  return (
+    <div className="pager">
+      <button className="btn ghost small" disabled={page <= 1} onClick={() => onChange(page - 1)}>‹ Sebelum</button>
+      <span className="small muted">Halaman {page} / {pages}</span>
+      <button className="btn ghost small" disabled={page >= pages} onClick={() => onChange(page + 1)}>Seterusnya ›</button>
+    </div>
+  )
+}
+
 export const Empty = ({ children }: { children: ReactNode }) => <p className="empty">{children}</p>
 
 export const Spinner = () => <div className="spinner" aria-label="Memuatkan" />

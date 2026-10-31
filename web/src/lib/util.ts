@@ -62,3 +62,12 @@ export function download(filename: string, content: string, type = 'text/csv;cha
 }
 
 export const errMsg = (e: unknown) => (e instanceof Error ? e.message : String(e))
+
+/** Class levels: 0 = Prasekolah, 1–6 = Tahun 1–6, 7 = PPKI */
+export const LEVELS: { value: number | null; label: string }[] = [
+  { value: 0, label: 'Prasekolah' },
+  ...[1, 2, 3, 4, 5, 6].map((n) => ({ value: n, label: `Tahun ${n}` })),
+  { value: 7, label: 'PPKI' },
+]
+export const levelLabel = (v: number | null | undefined) =>
+  LEVELS.find((l) => l.value === v)?.label ?? 'Lain-lain'
