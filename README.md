@@ -33,6 +33,7 @@ You need a free [Supabase](https://supabase.com) account (database + login + fil
 2. When it's ready, open **SQL Editor** → **New query**. Paste the whole of `supabase/migrations/001_schema.sql` → **Run**.
 3. New query again → paste `supabase/migrations/002_storage.sql` → **Run**.
 4. New query again → paste `supabase/migrations/003_profile_repair.sql` → **Run**. This repairs any account registered before steps 2–3 were done, and is safe to run again any time.
+5. New query again → paste `supabase/migrations/004_class_levels.sql` → **Run**. Adds Prasekolah and PPKI classes and class rename/delete.
 
 ### 2. Configure sign-in e-mails (important)
 Supabase's built-in e-mail sender only delivers to your own Supabase team members, and only 2 e-mails per hour. Parents would never receive their confirmation e-mail. Pick one option:
@@ -64,7 +65,7 @@ On Netlify, use the same settings: base directory `web`, build command `npm run 
 ### 5. Load the school's data
 1. **Tetapan:** school code, yuran amount per family, PIBG bank account (shown to parents), current year.
 2. **Import Data:** download the template, or upload your own Excel saved as **CSV UTF-8**. Common APDM column names are recognised automatically. Classes are created automatically. Re-importing the same list updates records rather than duplicating them.
-3. Ask teachers and AJK to register on the website. Then, in **Pengguna & Kelas**, set each person's role and assign a class teacher to each class.
+3. Ask teachers and AJK to register on the website. Then, in **Pengguna & Kelas**, set each person's role and assign a class teacher to each class. Classes are grouped in tabs (Prasekolah, Tahun 1–6, PPKI); create Tahun 1 classes once and use **Salin kelas Tahun 1 ke tahun lain** to create the same names for Tahun 2–6.
 4. Share the website link with parents (WhatsApp class groups work well).
 
 ### Each new school year
@@ -132,6 +133,7 @@ psql -d pibg_test -f supabase/tests/10_scenarios.sql   # ends with "ALL TESTS PA
 supabase/migrations/001_schema.sql   tables, family/sibling logic, functions, security rules
 supabase/migrations/002_storage.sql  private bucket for payment proofs
 supabase/migrations/003_profile_repair.sql  repairs accounts created before setup
+supabase/migrations/004_class_levels.sql    Prasekolah (0) & PPKI (7) levels, tidy class names
 supabase/tests/                      scenario tests (12 scenarios)
 web/src/pages/                       one file per screen (parent/, teacher/, staff/, admin/)
 web/src/lib/                         Supabase client, auth/roles, helpers

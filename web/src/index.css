@@ -162,7 +162,7 @@ textarea { resize: vertical; }
 .filters select { width: auto; }
 .page-head select { width: auto; }
 
-.seg { display: inline-flex; background: var(--grey-bg); border-radius: 9px; padding: 3px; }
+.seg { display: inline-flex; flex-wrap: wrap; background: var(--grey-bg); border-radius: 9px; padding: 3px; }
 .seg button { font: inherit; font-size: .82rem; font-weight: 600; border: 0; background: none; padding: .35rem .75rem; border-radius: 7px; cursor: pointer; color: var(--muted); }
 .seg button.on { background: #fff; color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
 
@@ -269,3 +269,11 @@ textarea { resize: vertical; }
   body, :root { background: #fff; }
   .receipt { border: 0; padding: 0; }
 }
+
+.pager { display: flex; align-items: center; justify-content: center; gap: .8rem; margin-top: .8rem; }
+.tabs-row { margin-bottom: 1rem; }
+.tabs-row .seg button span { opacity: .6; font-weight: 500; margin-left: .25rem; }
+.row-actions { display: flex; gap: .3rem; justify-content: flex-end; white-space: nowrap; }
+.copy-preview { max-height: 220px; overflow-y: auto; background: var(--bg); border-radius: 8px; padding: .5rem .8rem; font-size: .85rem; margin: .5rem 0 1rem; }
+.check-row { display: flex; flex-wrap: wrap; gap: .4rem 1rem; margin: .3rem 0 .6rem; }
+.check-row label { display: flex; gap: .35rem; align-items: center; font-size: .9rem; }
