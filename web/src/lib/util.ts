@@ -18,6 +18,7 @@ export const validIC = (v: string) => /^\d{12}$/.test(normIC(v))
 export const roleLabel: Record<Role, string> = {
   admin: 'Pentadbir',
   pengerusi: 'Pengerusi PIBG',
+  bendahari: 'Bendahari PIBG',
   pibg: 'AJK PIBG',
   panitia: 'Ketua Panitia',
   guru: 'Guru Kelas',

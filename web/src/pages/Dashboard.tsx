@@ -35,6 +35,9 @@ export default function Dashboard() {
   const [prog, setProg] = useState<Record<number, Progress>>({})
   const [loaded, setLoaded] = useState(false)
   const fam = useFamily()
+  const canPay = r.can('semak_bayaran')
+  const canDon = r.can('semak_sumbangan')
+  const canDrive = r.can('kempen') || canDon
 
   useEffect(() => {
     supabase.from('campaigns').select('*').eq('status', 'aktif').order('created_at', { ascending: false }).limit(2)
@@ -50,26 +53,20 @@ export default function Dashboard() {
       supabase.from('child_claims').select('id', head).eq('status', 'menunggu')
         .then(({ count }) => setCounts((c) => ({ ...c, claims: count ?? 0 }))),
     ]
-    if (r.isStaff) {
-      jobs.push(
-        supabase.from('fee_payments').select('id', head).eq('status', 'dihantar')
-          .then(({ count }) => setCounts((c) => ({ ...c, payments: count ?? 0 }))),
-        supabase.from('donations').select('id', head).eq('status', 'dihantar')
-          .then(({ count }) => setCounts((c) => ({ ...c, donations: count ?? 0 }))),
-        supabase.from('family_fee_status').select('family_id', head).neq('status', 'lunas')
-          .then(({ count }) => setCounts((c) => ({ ...c, unpaid: count ?? 0 }))),
-      )
-    }
+    if (canPay) jobs.push(supabase.from('fee_payments').select('id', head).eq('status', 'dihantar')
+      .then(({ count }) => setCounts((c) => ({ ...c, payments: count ?? 0 }))))
+    if (canDon) jobs.push(supabase.from('donations').select('id', head).eq('status', 'dihantar')
+      .then(({ count }) => setCounts((c) => ({ ...c, donations: count ?? 0 }))))
     Promise.all(jobs).then(() => setLoaded(true))
-  }, [r.isStaff, profile])
+  }, [canPay, canDon, profile])
 
   const name = firstName(profile?.full_name)
   const role = roleLabel[r.role]
 
   // Hero option 1a (design handoff "Admin Hero"): collection panel + task tiles
   const tasks: Todo[] = [
-    ...(r.isStaff ? [{ to: '/semakan-bayaran', label: 'Bukti yuran', n: counts.payments, hint: 'Sahkan & keluarkan resit' }] : []),
-    ...(r.isStaff ? [{ to: '/kempen', label: 'Sumbangan', n: counts.donations, hint: 'Kutipan dana berjalan' }] : []),
+    ...(canPay ? [{ to: '/semakan-bayaran', label: 'Bukti yuran', n: counts.payments, hint: 'Sahkan & keluarkan resit' }] : []),
+    ...(canDon ? [{ to: '/kempen', label: 'Sumbangan', n: counts.donations, hint: 'Kutipan dana berjalan' }] : []),
     ...(r.canVerify ? [{ to: '/pengesahan', label: 'Pengesahan murid', n: counts.claims, hint: 'Didaftarkan ibu bapa' }] : []),
   ]
   const outstanding = tasks.reduce((a, t) => a + t.n, 0)
@@ -124,21 +121,19 @@ export default function Dashboard() {
     </div>
   )
 
-  const tiles: QuickTile[] = r.isStaff
-    ? [
-        { to: '/semakan-bayaran', img: '/icons/bayar.png', label: 'Semak bayaran', tint: 't-gold', badge: counts.payments },
-        { to: '/rekod', img: '/icons/anak.png', label: 'Rekod murid', tint: 't-blue' },
-        { to: '/memo', img: '/icons/memo.png', label: 'Memo', tint: 't-red' },
-        { to: '/agm', img: '/icons/mesyuarat.png', label: 'Mesyuarat', tint: 't-green' },
-      ]
-    : [
-        r.canVerify
-          ? { to: '/pengesahan', img: '/icons/anak.png', label: 'Sahkan murid', tint: 't-blue', badge: counts.claims }
-          : { to: '/kelas', img: '/icons/anak.png', label: 'Kelas saya', tint: 't-blue' },
-        { to: '/dana', img: '/icons/bayar.png', label: 'Dana PIBG', tint: 't-gold' },
-        { to: '/memo', img: '/icons/memo.png', label: 'Memo', tint: 't-red' },
-        { to: '/agm', img: '/icons/mesyuarat.png', label: 'Mesyuarat', tint: 't-green' },
-      ]
+  // first four shortcuts this user can open
+  const tiles: QuickTile[] = ([
+    canPay && { to: '/semakan-bayaran', img: '/icons/bayar.png', label: 'Semak bayaran', tint: 't-gold', badge: counts.payments },
+    r.canVerify && { to: '/pengesahan', img: '/icons/anak.png', label: 'Sahkan murid', tint: 't-blue', badge: counts.claims },
+    r.can('rekod_urus') && { to: '/rekod', img: '/icons/anak.png', label: 'Rekod murid', tint: 't-blue' },
+    !r.canVerify && r.myClasses.length > 0 && { to: '/kelas', img: '/icons/anak.png', label: 'Kelas saya', tint: 't-blue' },
+    r.can('kempen') && { to: '/kempen', img: '/icons/bayar.png', label: 'Kutipan dana', tint: 't-gold' },
+    r.can('laporan') && { to: '/laporan', img: '/icons/bayar.png', label: 'Laporan', tint: 't-blue' },
+    { to: '/memo', img: '/icons/memo.png', label: 'Memo', tint: 't-red' },
+    { to: '/agm', img: '/icons/mesyuarat.png', label: 'Mesyuarat', tint: 't-green' },
+    { to: '/dana', img: '/icons/bayar.png', label: 'Dana PIBG', tint: 't-gold' },
+  ].filter(Boolean) as QuickTile[])
+    .slice(0, 4)
 
   // committee / chairman / admin are parents too
   const feeTone = { lunas: 'green', menunggu: 'amber', belum: 'red' } as const
@@ -173,9 +168,9 @@ export default function Dashboard() {
 
   const drivesBlock = drives.length > 0 && (
     <div className={mobile ? 'home-sec' : ''} style={mobile ? undefined : { marginTop: 20 }}>
-      <div className="sec-head"><h2>Kutipan dana</h2><Link to={r.isStaff ? '/kempen' : '/sumbangan'}>Semua →</Link></div>
+      <div className="sec-head"><h2>Kutipan dana</h2><Link to={canDrive ? '/kempen' : '/sumbangan'}>Semua →</Link></div>
       <div className="campaign-grid">
-        {drives.map((c) => <CampaignCard key={c.id} c={c} p={prog[c.id]} to={r.isStaff ? `/kempen/${c.id}` : `/sumbangan/${c.id}`} compact />)}
+        {drives.map((c) => <CampaignCard key={c.id} c={c} p={prog[c.id]} to={canDrive ? `/kempen/${c.id}` : `/sumbangan/${c.id}`} compact />)}
       </div>
     </div>
   )

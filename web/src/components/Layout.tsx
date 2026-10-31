@@ -37,6 +37,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         { to: '/dana', label: 'Dana & Program', icon: '◎', show: true },
         { to: '/agm', label: 'Mesyuarat Agung', icon: '☑', show: true },
         { to: '/sumbangan', label: 'Sumbangan', icon: '♥', show: true },
+        { to: '/laporan', label: 'Laporan', icon: '▤', show: r.can('laporan') },
       ],
     },
     {
@@ -56,18 +57,18 @@ export default function Layout({ children }: { children: ReactNode }) {
     {
       title: 'PIBG',
       items: [
-        { to: '/rekod', label: 'Rekod Murid & Keluarga', icon: '☰', show: r.isStaff },
-        { to: '/kutipan', label: 'Kutipan Yuran', icon: '◆', show: r.isStaff },
-        { to: '/semakan-bayaran', label: 'Semakan Bayaran', icon: '⎙', show: r.isStaff },
-        { to: '/kempen', label: 'Kutipan Dana', icon: '♥', show: r.isStaff },
-        { to: '/import', label: 'Import Data', icon: '⇪', show: r.isStaff },
+        { to: '/rekod', label: 'Rekod Murid & Keluarga', icon: '☰', show: r.can('rekod_urus') },
+        { to: '/kutipan', label: 'Kutipan Yuran', icon: '◆', show: r.can('kutipan_yuran') },
+        { to: '/semakan-bayaran', label: 'Semakan Bayaran', icon: '⎙', show: r.can('semak_bayaran') },
+        { to: '/kempen', label: 'Kutipan Dana', icon: '♥', show: r.can('kempen') || r.can('semak_sumbangan') },
+        { to: '/import', label: 'Import Data', icon: '⇪', show: r.can('import') },
       ],
     },
     {
       title: 'Pentadbir',
       items: [
         { to: '/pengguna', label: 'Pengguna & Kelas', icon: '⚙', show: r.isAdmin },
-        { to: '/tetapan', label: 'Tetapan', icon: '⚒', show: r.isStaff },
+        { to: '/tetapan', label: 'Tetapan', icon: '⚒', show: r.isAdmin || r.can('tetapan') },
       ],
     },
   ]
@@ -92,9 +93,13 @@ export default function Layout({ children }: { children: ReactNode }) {
         ]
       : [
           { to: '/', label: 'Utama', icon: '⌂', match: ['/'] },
-          r.isStaff
+          r.can('semak_bayaran')
             ? { to: '/semakan-bayaran', label: 'Semak', icon: '⎙', match: ['/semakan-bayaran'] }
-            : { to: '/pengesahan', label: 'Sahkan', icon: '✓', match: ['/pengesahan'] },
+            : r.canVerify
+              ? { to: '/pengesahan', label: 'Sahkan', icon: '✓', match: ['/pengesahan'] }
+              : r.can('laporan')
+                ? { to: '/laporan', label: 'Laporan', icon: '▤', match: ['/laporan'] }
+                : { to: '/agm', label: 'AGM', icon: '☑', match: ['/agm'] },
           { to: '/memo', label: 'Memo', icon: '✉', match: ['/memo'] },
           { to: '/dana', label: 'Dana', icon: '◎', match: ['/dana'] },
         ]

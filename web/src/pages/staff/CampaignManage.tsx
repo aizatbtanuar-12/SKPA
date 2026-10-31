@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react
 import { Link, useParams } from 'react-router-dom'
 import { supabase, check } from '../../lib/supabase'
 import { DataTable } from '../../components/DataTable'
-import { useAuth } from '../../lib/auth'
+import { useAuth, useRole } from '../../lib/auth'
 import { PageHead } from '../../components/Layout'
 import { Badge, Card, Empty, Field, Modal, Spinner, Stat, useAction, useToast } from '../../components/ui'
 import { CampaignForm } from './Campaigns'
@@ -16,6 +16,8 @@ const PAGE = 20
 export default function CampaignManage() {
   const { id } = useParams()
   const { settings } = useAuth()
+  const acc = useRole()
+  const canK = acc.can('kempen'), canD = acc.can('semak_sumbangan')
   const toast = useToast()
   const [c, setC] = useState<Campaign | null | undefined>(undefined)
   const [p, setP] = useState<Progress | undefined>()
@@ -79,9 +81,9 @@ export default function CampaignManage() {
         sub={<><Badge tone={campaignStatus[c.status][1]}>{campaignStatus[c.status][0]}</Badge> <span className="muted">· kod rujukan</span> <code translate="no">{c.code}</code></>}
         actions={<>
           <Link className="btn ghost" to="/kempen">‹ Semua kutipan</Link>
-          <button className="btn" onClick={() => setEdit(true)}>Ubah</button>
-          {c.status !== 'aktif' && <button className="btn primary" disabled={busy} onClick={() => setStatus('aktif')}>{c.status === 'draf' ? 'Buka kepada ibu bapa' : 'Buka semula'}</button>}
-          {c.status === 'aktif' && <button className="btn" disabled={busy} onClick={() => setStatus('ditutup')}>Tutup kutipan</button>}
+          {canK && <button className="btn" onClick={() => setEdit(true)}>Ubah</button>}
+          {canK && c.status !== 'aktif' && <button className="btn primary" disabled={busy} onClick={() => setStatus('aktif')}>{c.status === 'draf' ? 'Buka kepada ibu bapa' : 'Buka semula'}</button>}
+          {canK && c.status === 'aktif' && <button className="btn" disabled={busy} onClick={() => setStatus('ditutup')}>Tutup kutipan</button>}
         </>} />
 
       <div className="stats">
@@ -94,7 +96,7 @@ export default function CampaignManage() {
       <div className="row gap wrap" style={{ marginBottom: '1rem' }}>
         <button className="btn" onClick={whatsapp} disabled={c.status === 'draf'} title={c.status === 'draf' ? 'Buka kutipan dahulu' : ''}>Salin teks WhatsApp</button>
         <Link className="btn" to={`/sumbangan/${c.id}`}>Lihat halaman ibu bapa</Link>
-        <button className="btn" onClick={() => setRecord(true)}>Rekod sumbangan tunai / luar</button>
+        {canD && <button className="btn" onClick={() => setRecord(true)}>Rekod sumbangan tunai / luar</button>}
         <button className="btn ghost" onClick={exportCSV}>Muat turun CSV</button>
       </div>
 
@@ -118,7 +120,7 @@ export default function CampaignManage() {
               { key: 'ruj', label: 'Rujukan', sort: (r) => r.reference, className: 'mono small', render: (r) => r.reference || '-' },
               { key: 'status', label: 'Status', sort: (r) => payLabel[r.status], render: (r) => <Badge tone={payTone[r.status]}>{payLabel[r.status]}</Badge> },
               { key: 'aksi', label: '', render: (r) => <>
-                {r.status === 'dihantar' && <button className="btn primary small" onClick={() => setReview(r)}>Semak</button>}
+                {canD && r.status === 'dihantar' && <button className="btn primary small" onClick={() => setReview(r)}>Semak</button>}
                 {r.receipt_no && <Link className="link small mono" to={`/resit-sumbangan/${r.id}`}>{r.receipt_no}</Link>}
               </> },
             ]} />
