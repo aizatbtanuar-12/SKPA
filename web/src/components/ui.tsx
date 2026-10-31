@@ -34,12 +34,15 @@ export const Empty = ({ children }: { children: ReactNode }) => <p className="em
 
 export const Spinner = () => <div className="spinner" aria-label="Memuatkan" />
 
+const prim = (x: ReactNode) => (typeof x === 'string' || typeof x === 'number' ? String(x) : '')
+
 export function Stat({ label, value, sub, tone }: { label: string; value: ReactNode; sub?: ReactNode; tone?: Tone }) {
   return (
     <div className={`stat ${tone ?? ''}`}>
       <span className="stat-label">{label}</span>
-      <strong className="stat-value">{value}</strong>
-      {sub && <span className="stat-sub">{sub}</span>}
+      {/* keyed so Chrome auto-translate picks up new values (see Live in pui.tsx) */}
+      <strong className="stat-value" key={`v${prim(value)}`}>{value}</strong>
+      {sub && <span className="stat-sub" key={`s${prim(sub)}`}>{sub}</span>}
     </div>
   )
 }

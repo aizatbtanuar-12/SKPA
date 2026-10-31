@@ -5,7 +5,7 @@ import { useAuth, useRole } from '../lib/auth'
 import { roleLabel } from '../lib/util'
 import CampaignCard from '../components/CampaignCard'
 import { DanaCard, MemoTile, MEMO_SELECT, type MemoLite } from '../components/HomeParts'
-import { QuickTiles, type QuickTile, firstName, initials, todayLong, useIsMobile } from '../components/pui'
+import { Live, QuickTiles, type QuickTile, firstName, initials, todayLong, useIsMobile } from '../components/pui'
 import { loadProgress, type Campaign, type Progress } from '../lib/donations'
 
 export interface FundSummary {
@@ -77,13 +77,13 @@ export default function Dashboard() {
   const todoCard = (
     <div className="feecard todo-card">
       <div className="feecard-top"><span>Perlu tindakan</span><span className="pbadge gold">{role}</span></div>
-      <div className="big-amount">{loaded ? outstanding : '…'}</div>
-      <div className="caption">{outstanding ? 'perkara menunggu tindakan anda' : 'Tiada perkara tertunggak. Syabas!'}</div>
+      <Live as="div" className="big-amount">{loaded ? outstanding : '…'}</Live>
+      <Live as="div" className="caption">{!loaded ? 'Memuatkan…' : outstanding ? 'perkara menunggu tindakan anda' : 'Tiada perkara tertunggak. Syabas!'}</Live>
       <div className="todo-list">
         {todos.length ? todos.map((t) => (
           <Link key={t.to} to={t.to} className="todo-row">
             <div><b>{t.label}</b><span>{t.hint}</span></div>
-            <span className={`todo-n ${t.n && t.to !== '/kutipan' ? 'hot' : ''}`}>{t.n}</span>
+            <Live className={`todo-n ${t.n && t.to !== '/kutipan' ? 'hot' : ''}`}>{t.n}</Live>
           </Link>
         )) : <div className="pinfo blue">Anda boleh membaca memo, melihat dana dan menyertai mesyuarat agung.</div>}
       </div>

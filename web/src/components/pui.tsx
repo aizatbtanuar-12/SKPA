@@ -53,6 +53,17 @@ export function PPager({ page, pages, onChange, variant = 'dots' }:
   )
 }
 
+/**
+ * Text that changes after the first render (counts, amounts, sentences with numbers).
+ * Chrome's auto-translate swaps text for its own copy, so React's later updates go to
+ * a detached node and the screen stays stale ("0 of 0"). Keying on the text makes
+ * React replace the element instead, which the translator then picks up afresh.
+ */
+export function Live({ children, as: Tag = 'span', className }: { children: string | number; as?: 'span' | 'b' | 'i' | 'div' | 'small' | 'strong' | 'h2'; className?: string }) {
+  const t = String(children)
+  return <Tag key={t} className={className}>{t}</Tag>
+}
+
 export type PTone = 'green' | 'amber' | 'red' | 'blue' | 'grey' | 'gold' | 'ghost'
 export const PBadge = ({ tone, children }: { tone: PTone; children: ReactNode }) => <span className={`pbadge ${tone}`}>{children}</span>
 
@@ -75,7 +86,7 @@ export function QuickTiles({ tiles, mobile }: { tiles: QuickTile[]; mobile: bool
       <div className="quick">
         {tiles.map((t) => (
           <Link key={t.to + t.label} to={t.to} state={t.state}>
-            <span className={`tile ${t.tint}`} aria-hidden="true"><img src={t.img} alt="" />{t.badge ? <i className="qbadge">{t.badge}</i> : null}</span>
+            <span className={`tile ${t.tint}`} aria-hidden="true"><img src={t.img} alt="" />{t.badge ? <Live as="i" className="qbadge">{t.badge}</Live> : null}</span>
             {t.label}
           </Link>
         ))}
@@ -88,7 +99,7 @@ export function QuickTiles({ tiles, mobile }: { tiles: QuickTile[]; mobile: bool
         <Link key={t.to + t.label} to={t.to} state={t.state} className={t.tint}>
           <span className="ico" aria-hidden="true"><img src={t.img} alt="" /></span>
           <span className="lbl">{t.label}</span>
-          {t.badge ? <i className="qbadge">{t.badge}</i> : null}
+          {t.badge ? <Live as="i" className="qbadge">{t.badge}</Live> : null}
         </Link>
       ))}
     </div>
