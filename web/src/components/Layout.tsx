@@ -2,6 +2,7 @@ import { useState, type ReactNode } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { useAuth, useRole } from '../lib/auth'
 import { roleLabel } from '../lib/util'
+import ParentShell from './ParentShell'
 
 interface NavItem { to: string; label: string; icon: string; show: boolean }
 
@@ -10,6 +11,7 @@ export default function Layout({ children }: { children: ReactNode }) {
   const r = useRole()
   const [open, setOpen] = useState(false)
   const loc = useLocation()
+  if (r.isParent) return <ParentShell>{children}</ParentShell>
 
   const groups: { title: string; items: NavItem[] }[] = [
     {

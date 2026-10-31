@@ -26,6 +26,10 @@ import DonationCampaign from './pages/DonationCampaign'
 import DonationReceipt from './pages/DonationReceipt'
 import Campaigns from './pages/staff/Campaigns'
 import CampaignManage from './pages/staff/CampaignManage'
+import ParentHome from './pages/parent/Home'
+import ParentMemos from './pages/parent/ParentMemos'
+import ParentFunds from './pages/parent/ParentFunds'
+import ParentAgm from './pages/parent/ParentAgm'
 
 function Guard({ ok, children }: { ok: boolean; children: ReactNode }) {
   return ok ? <>{children}</> : <Navigate to="/" replace />
@@ -55,10 +59,10 @@ function Routed() {
   return (
     <Layout>
       <Routes>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/memo" element={<Memos />} />
-        <Route path="/dana" element={<Funds />} />
-        <Route path="/agm" element={<Agm />} />
+        <Route path="/" element={r.isParent ? <ParentHome /> : <Dashboard />} />
+        <Route path="/memo" element={r.isParent ? <ParentMemos /> : <Memos />} />
+        <Route path="/dana" element={r.isParent ? <ParentFunds /> : <Funds />} />
+        <Route path="/agm" element={r.isParent ? <ParentAgm /> : <Agm />} />
         <Route path="/profil" element={<Profile />} />
         <Route path="/resit/:id" element={<Receipt />} />
         <Route path="/sumbangan" element={<Donations />} />
