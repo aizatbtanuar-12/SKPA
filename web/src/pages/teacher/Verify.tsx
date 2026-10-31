@@ -2,8 +2,9 @@ import { useCallback, useEffect, useState } from 'react'
 import { supabase, check } from '../../lib/supabase'
 import { useRole } from '../../lib/auth'
 import { PageHead } from '../../components/Layout'
-import { Badge, Card, Empty, Field, Modal, useAction } from '../../components/ui'
+import { Badge, Card, Field, Modal, useAction } from '../../components/ui'
 import { claimLabel, claimTone, date, fmtIC, maskIC, relationLabel } from '../../lib/util'
+import { DataTable } from '../../components/DataTable'
 
 interface ClaimRow {
   id: number; child_name: string; child_ic: string | null; class_id: number; relation: string
@@ -47,23 +48,17 @@ export default function Verify() {
         belum ada dalam sistem. Selepas disahkan, anak-anak yang berkongsi No. KP ibu/bapa digabungkan sebagai satu keluarga secara automatik.
       </p>
       <Card>
-        {rows.length ? (
-          <table className="table">
-            <thead><tr><th>Nama anak</th><th>Kelas</th><th>Ibu bapa</th><th>Tarikh</th><th>Status</th><th /></tr></thead>
-            <tbody>
-              {rows.map((r) => (
-                <tr key={r.id}>
-                  <td><strong>{r.child_name}</strong>{r.child_ic && <div className="muted small">MyKid {fmtIC(r.child_ic)}</div>}</td>
-                  <td>{r.classes?.name}</td>
-                  <td>{r.parent?.full_name}<div className="muted small">{relationLabel[r.relation]} · {r.parent?.phone || '-'}</div></td>
-                  <td>{date(r.created_at)}</td>
-                  <td><Badge tone={claimTone[r.status]}>{claimLabel[r.status]}</Badge></td>
-                  <td>{r.status === 'menunggu' && <button className="btn primary small" onClick={() => setOpen(r)}>Semak</button>}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : <Empty>{filter === 'menunggu' ? 'Tiada permohonan menunggu. 🎉' : 'Tiada rekod.'}</Empty>}
+        <DataTable rows={rows} rowKey={(r) => r.id} pageSize={15} resetKey={filter}
+          initialSort={{ key: 'tarikh', dir: filter === 'menunggu' ? 'asc' : 'desc' }}
+          empty={filter === 'menunggu' ? 'Tiada permohonan menunggu. 🎉' : 'Tiada rekod.'}
+          cols={[
+            { key: 'nama', label: 'Nama anak', sort: (r) => r.child_name, render: (r) => <><strong>{r.child_name}</strong>{r.child_ic && <div className="muted small">MyKid {fmtIC(r.child_ic)}</div>}</> },
+            { key: 'kelas', label: 'Kelas', sort: (r) => r.classes?.name, render: (r) => r.classes?.name },
+            { key: 'ibubapa', label: 'Ibu bapa', sort: (r) => r.parent?.full_name, render: (r) => <>{r.parent?.full_name}<div className="muted small">{relationLabel[r.relation]} · {r.parent?.phone || '-'}</div></> },
+            { key: 'tarikh', label: 'Tarikh', sort: (r) => r.created_at, render: (r) => date(r.created_at) },
+            { key: 'status', label: 'Status', sort: (r) => claimLabel[r.status], render: (r) => <Badge tone={claimTone[r.status]}>{claimLabel[r.status]}</Badge> },
+            { key: 'aksi', label: '', render: (r) => r.status === 'menunggu' && <button className="btn primary small" onClick={() => setOpen(r)}>Semak</button> },
+          ]} />
       </Card>
       {open && <ReviewModal claim={open} onClose={() => setOpen(null)} onDone={() => { setOpen(null); load() }} />}
     </>

@@ -5,6 +5,7 @@ import { PageHead } from '../../components/Layout'
 import { Badge, Card, Empty, Field, Modal, useAction } from '../../components/ui'
 import { dateTime, payLabel, payTone, rm } from '../../lib/util'
 import type { Payment } from '../parent/ParentFees'
+import { DataTable } from '../../components/DataTable'
 
 type Row = Payment & { families: { family_code: string } | null; submitter: { full_name: string; phone: string | null } | null }
 
@@ -34,26 +35,20 @@ export default function PaymentReview() {
           </div>
         } />
       <Card>
-        {rows.length ? (
-          <table className="table">
-            <thead><tr><th>Dihantar</th><th>Keluarga</th><th>Oleh</th><th>Jumlah</th><th>Status</th><th /></tr></thead>
-            <tbody>
-              {rows.map((r) => (
-                <tr key={r.id}>
-                  <td>{dateTime(r.submitted_at)}</td>
-                  <td className="mono">{r.families?.family_code}</td>
-                  <td>{r.submitter?.full_name}<div className="muted small">{r.submitter?.phone}</div></td>
-                  <td>{rm(r.amount)}{r.reference && <div className="muted small">{r.reference}</div>}</td>
-                  <td><Badge tone={payTone[r.status]}>{payLabel[r.status]}</Badge></td>
-                  <td>
-                    {r.status === 'dihantar' && <button className="btn primary small" onClick={() => setOpen(r)}>Semak</button>}
-                    {r.receipt_no && <Link className="link small" to={`/resit/${r.id}`}>{r.receipt_no}</Link>}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : <Empty>Tiada bayaran {status ? payLabel[status].toLowerCase() : ''}.</Empty>}
+        <DataTable rows={rows} rowKey={(r) => r.id} pageSize={15} resetKey={status}
+          initialSort={{ key: 'dihantar', dir: status === 'dihantar' ? 'asc' : 'desc' }}
+          empty={`Tiada bayaran ${status ? payLabel[status].toLowerCase() : ''}.`}
+          cols={[
+            { key: 'dihantar', label: 'Dihantar', sort: (r) => r.submitted_at, render: (r) => dateTime(r.submitted_at) },
+            { key: 'kod', label: 'Keluarga', sort: (r) => r.families?.family_code, className: 'mono', render: (r) => r.families?.family_code },
+            { key: 'oleh', label: 'Oleh', sort: (r) => r.submitter?.full_name, render: (r) => <>{r.submitter?.full_name}<div className="muted small">{r.submitter?.phone}</div></> },
+            { key: 'jumlah', label: 'Jumlah', num: true, sort: (r) => Number(r.amount), render: (r) => <>{rm(r.amount)}{r.reference && <div className="muted small mono">{r.reference}</div>}</> },
+            { key: 'status', label: 'Status', sort: (r) => payLabel[r.status], render: (r) => <Badge tone={payTone[r.status]}>{payLabel[r.status]}</Badge> },
+            { key: 'aksi', label: '', render: (r) => <>
+              {r.status === 'dihantar' && <button className="btn primary small" onClick={() => setOpen(r)}>Semak</button>}
+              {r.receipt_no && <Link className="link small" to={`/resit/${r.id}`}>{r.receipt_no}</Link>}
+            </> },
+          ]} />
       </Card>
       {open && <Review p={open} onClose={() => setOpen(null)} onDone={() => { setOpen(null); load() }} />}
     </>
