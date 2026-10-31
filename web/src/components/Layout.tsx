@@ -1,27 +1,41 @@
-import { useState, type ReactNode } from 'react'
-import { NavLink, useLocation } from 'react-router-dom'
+import { useEffect, useState, type ReactNode } from 'react'
+import { Link, NavLink, useLocation } from 'react-router-dom'
 import { useAuth, useRole } from '../lib/auth'
 import { roleLabel } from '../lib/util'
-import ParentShell from './ParentShell'
+import { initials, useIsMobile } from './pui'
+import { useUnreadMemos } from './useUnreadMemos'
 
-interface NavItem { to: string; label: string; icon: string; show: boolean }
+interface NavItem { to: string; label: string; icon: string; show: boolean; count?: number }
+interface Tab { to: string; label: string; icon: string; match: string[] }
 
+/**
+ * One shell for every role (design handoff "Parent (PTA) Portal Redesign"):
+ * navy sidebar on desktop, bottom tab bar on phones. What changes per role is
+ * only the menu.
+ */
 export default function Layout({ children }: { children: ReactNode }) {
   const { profile, settings, signOut } = useAuth()
   const r = useRole()
-  const [open, setOpen] = useState(false)
+  const mobile = useIsMobile()
   const loc = useLocation()
-  if (r.isParent) return <ParentShell>{children}</ParentShell>
+  const unread = useUnreadMemos()
+  const [menu, setMenu] = useState(false)
+
+  useEffect(() => {
+    document.body.classList.add('parent-ui')
+    return () => document.body.classList.remove('parent-ui')
+  }, [])
+  useEffect(() => { window.scrollTo({ top: 0 }); setMenu(false) }, [loc.pathname])
 
   const groups: { title: string; items: NavItem[] }[] = [
     {
       title: 'Utama',
       items: [
         { to: '/', label: 'Laman Utama', icon: '⌂', show: true },
-        { to: '/memo', label: 'Memo & Pengumuman', icon: '✉', show: true },
+        { to: '/memo', label: 'Memo & Pengumuman', icon: '✉', show: true, count: unread },
         { to: '/dana', label: 'Dana & Program', icon: '◎', show: true },
-        { to: '/sumbangan', label: 'Sumbangan', icon: '♥', show: true },
         { to: '/agm', label: 'Mesyuarat Agung', icon: '☑', show: true },
+        { to: '/sumbangan', label: 'Sumbangan', icon: '♥', show: true },
       ],
     },
     {
@@ -56,61 +70,120 @@ export default function Layout({ children }: { children: ReactNode }) {
       ],
     },
   ]
+    .map((g) => ({ ...g, items: g.items.filter((i) => i.show) }))
+    .filter((g) => g.items.length)
+
+  const item = (i: NavItem) => (
+    <NavLink key={i.to} to={i.to} end={i.to === '/'} className="pside-link">
+      <span className="ico" aria-hidden="true">{i.icon}</span>{i.label}
+      {i.count ? <span className="count" aria-label={`${i.count} belum dibaca`}>{i.count}</span> : null}
+    </NavLink>
+  )
+
+  if (mobile) {
+    const tabs: Tab[] = r.isParent
+      ? [
+          { to: '/', label: 'Utama', icon: '⌂', match: ['/', '/anak', '/sumbangan', '/profil', '/resit', '/resit-sumbangan'] },
+          { to: '/yuran', label: 'Yuran', icon: '◆', match: ['/yuran'] },
+          { to: '/memo', label: 'Memo', icon: '✉', match: ['/memo'] },
+          { to: '/dana', label: 'Dana', icon: '◎', match: ['/dana'] },
+          { to: '/agm', label: 'AGM', icon: '☑', match: ['/agm'] },
+        ]
+      : [
+          { to: '/', label: 'Utama', icon: '⌂', match: ['/'] },
+          r.isStaff
+            ? { to: '/semakan-bayaran', label: 'Semak', icon: '⎙', match: ['/semakan-bayaran'] }
+            : { to: '/pengesahan', label: 'Sahkan', icon: '✓', match: ['/pengesahan'] },
+          { to: '/memo', label: 'Memo', icon: '✉', match: ['/memo'] },
+          { to: '/dana', label: 'Dana', icon: '◎', match: ['/dana'] },
+        ]
+    const inTabs = tabs.flatMap((t) => t.match)
+    const isOn = (m: string) => (m === '/' ? loc.pathname === '/' : loc.pathname === m || loc.pathname.startsWith(m + '/'))
+    const active = (t: Tab) => !menu && t.match.some(isOn)
+    const menuActive = menu || (!r.isParent && !inTabs.some(isOn))
+    return (
+      <div className="pshell mob">
+        {loc.pathname === '/' ? children : <div className="pmob-page up" key={loc.pathname}>{children}</div>}
+        <nav className="ptabbar" aria-label="Menu utama">
+          {tabs.map((t) => (
+            <Link key={t.to} to={t.to} className={`ptab ${active(t) ? 'active' : ''}`} aria-current={active(t) ? 'page' : undefined}>
+              <span className="pill" aria-hidden="true">{t.icon}{t.to === '/memo' && unread ? <i className="dot" /> : null}</span>{t.label}
+            </Link>
+          ))}
+          {!r.isParent && (
+            <button type="button" className={`ptab ${menuActive ? 'active' : ''}`} onClick={() => setMenu((m) => !m)} aria-expanded={menu}>
+              <span className="pill" aria-hidden="true">☰</span>Menu
+            </button>
+          )}
+        </nav>
+        {menu && (
+          <div className="sheet-back menu-back" onClick={() => setMenu(false)}>
+            <div className="sheet menu-sheet" role="dialog" aria-label="Menu" onClick={(e) => e.stopPropagation()}>
+              <div className="grab" />
+              <Link to="/profil" className="menu-who">
+                <span className="avatar" aria-hidden="true">{initials(profile?.full_name)}</span>
+                <div><strong>{profile?.full_name || 'Pengguna'}</strong><span>{roleLabel[r.role]}</span></div>
+              </Link>
+              {groups.map((g) => (
+                <div key={g.title}>
+                  <span className="pside-title">{g.title}</span>
+                  <div className="menu-grid">
+                    {g.items.map((i) => (
+                      <NavLink key={i.to} to={i.to} end={i.to === '/'} className="menu-link">
+                        <span className="ico" aria-hidden="true">{i.icon}</span><span>{i.label}</span>
+                        {i.count ? <span className="count">{i.count}</span> : null}
+                      </NavLink>
+                    ))}
+                  </div>
+                </div>
+              ))}
+              <button className="pbtn sec" style={{ marginTop: 18 }} onClick={signOut}>Log keluar</button>
+            </div>
+          </div>
+        )}
+      </div>
+    )
+  }
 
   return (
-    <div className="shell">
-      <aside className={`side ${open ? 'open' : ''}`}>
-        <div className="brand">
-          <img className="logo" src="/logo.png" alt="Logo PIBG SK Puncak Alam" />
-          <div>
-            <strong>Portal PIBG</strong>
-            <span>{settings?.school_name ?? 'SK Puncak Alam'}</span>
-          </div>
+    <div className="pshell desk">
+      <aside className="pside">
+        <div className="pside-brand">
+          <img src="/logo.png" alt="Logo PIBG SK Puncak Alam" />
+          <div><strong>Portal PIBG</strong><span>{settings?.school_name ?? 'SK Puncak Alam'}</span></div>
         </div>
-        <nav onClick={() => setOpen(false)}>
-          {groups.map((g) => {
-            const items = g.items.filter((i) => i.show)
-            if (!items.length) return null
-            return (
-              <div key={g.title} className="nav-group">
-                <span className="nav-title">{g.title}</span>
-                {items.map((i) => (
-                  <NavLink key={i.to} to={i.to} end={i.to === '/'} className="nav-link">
-                    <span className="nav-icon" aria-hidden>{i.icon}</span>{i.label}
-                  </NavLink>
-                ))}
-              </div>
-            )
-          })}
+        <nav aria-label="Menu utama">
+          {groups.map((g) => (
+            <div key={g.title}>
+              <span className="pside-title">{g.title}</span>
+              {g.items.map(item)}
+            </div>
+          ))}
         </nav>
-        <div className="side-foot">
-          <NavLink to="/profil" className="who" onClick={() => setOpen(false)}>
-            <strong>{profile?.full_name || 'Pengguna'}</strong>
-            <span>{roleLabel[r.role]}</span>
-          </NavLink>
-          <button className="btn ghost small" onClick={signOut}>Log keluar</button>
+        <div className="pside-foot">
+          <Link to="/profil">
+            <span className="avatar" aria-hidden="true">{initials(profile?.full_name)}</span>
+            <div style={{ minWidth: 0 }}><strong>{profile?.full_name || 'Pengguna'}</strong><span>{r.isParent ? 'Ibu Bapa / Penjaga' : roleLabel[r.role]}</span></div>
+          </Link>
+          <button onClick={signOut}>Keluar</button>
         </div>
       </aside>
-      {open && <div className="side-back" onClick={() => setOpen(false)} />}
-      <main className="main" key={loc.pathname}>
-        <div className="topbar">
-          <button className="btn ghost menu-btn" onClick={() => setOpen(true)} aria-label="Menu">☰</button>
-          <span className="topbar-title">Portal PIBG {settings?.school_name ?? ''}</span>
-        </div>
-        {children}
-      </main>
+      <main className="pmain"><div className="pcontent up" key={loc.pathname}>{children}</div></main>
     </div>
   )
 }
 
+/** Page title block used by the shared and staff pages (same look as the parent screens) */
 export function PageHead({ title, sub, actions }: { title: string; sub?: ReactNode; actions?: ReactNode }) {
   return (
-    <div className="page-head">
-      <div>
-        <h1>{title}</h1>
-        {sub && <p className="muted">{sub}</p>}
+    <div className="ph page-head-x">
+      <div className="ph-row">
+        <div style={{ minWidth: 0 }}>
+          <h1>{title}</h1>
+          {sub && <p>{sub}</p>}
+        </div>
+        {actions && <div className="ph-actions">{actions}</div>}
       </div>
-      {actions && <div className="row gap wrap">{actions}</div>}
     </div>
   )
 }

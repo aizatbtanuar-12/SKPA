@@ -4,12 +4,12 @@ import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/auth'
 import { useFamily } from '../../lib/useFamily'
 import { rm, feeStatusLabel } from '../../lib/util'
-import { PBadge, Ring, firstName, initials, shortRM, tintBg, todayLong, useIsMobile, dayMonth } from '../../components/pui'
+import { PBadge, QuickTiles, type QuickTile, firstName, initials, todayLong, useIsMobile } from '../../components/pui'
 import CampaignCard from '../../components/CampaignCard'
+import { DanaCard, MemoTile, MEMO_SELECT, type MemoLite } from '../../components/HomeParts'
 import { loadProgress, type Campaign, type Progress } from '../../lib/donations'
 import type { FundSummary } from '../Dashboard'
 
-interface MemoLite { id: number; title: string; published_at: string; pinned: boolean; audience: string; author: { full_name: string } | null }
 
 const feeTone = { lunas: 'green', menunggu: 'amber', belum: 'red' } as const
 
@@ -25,7 +25,7 @@ export default function ParentHome() {
   const [prog, setProg] = useState<Record<number, Progress>>({})
 
   useEffect(() => {
-    supabase.from('memos').select('id,title,published_at,pinned,audience,author:profiles!memos_author_id_fkey(full_name)')
+    supabase.from('memos').select(MEMO_SELECT)
       .order('pinned', { ascending: false }).order('published_at', { ascending: false }).limit(4)
       .then(({ data }) => setMemos((data as unknown as MemoLite[]) ?? []))
     if (profile) supabase.from('memo_reads').select('memo_id').eq('user_id', profile.id)
@@ -41,8 +41,6 @@ export default function ParentHome() {
   const balance = fee ? Math.max(0, Number(fee.fee_due) - Number(fee.paid)) : 0
   const amount = status === 'belum' ? balance : Number(fee?.fee_due ?? 0)
   const caption = { belum: 'Baki perlu dibayar untuk sekeluarga', menunggu: 'Bukti bayaran sedang disemak bendahari', lunas: 'Telah dibayar sepenuhnya. Terima kasih!' }[status]
-  const paidPct = fund && fund.families_total ? (fund.families_paid / fund.families_total) * 100 : 0
-  const surplus = Number(fund?.balance ?? 0)
 
   const feeCard = !familyId ? (
     <div className="feecard">
@@ -66,39 +64,15 @@ export default function ParentHome() {
     </div>
   ) : <div className="feecard"><div className="caption">Memuatkan…</div></div>
 
-  const tiles = [
-    { to: '/yuran', state: { tab: 'bayar' }, icon: '◆', label: 'Bayar yuran', t: 't-gold' },
-    { to: '/anak', icon: '☺', label: 'Anak saya', t: 't-blue' },
-    { to: '/memo', icon: '✉', label: 'Memo', t: 't-red' },
-    { to: '/agm', icon: '☑', label: 'Mesyuarat', t: 't-green' },
+  const tiles: QuickTile[] = [
+    { to: '/yuran', state: { tab: 'bayar' }, img: '/icons/bayar.png', label: 'Bayar yuran', tint: 't-gold' },
+    { to: '/anak', img: '/icons/anak.png', label: 'Anak saya', tint: 't-blue' },
+    { to: '/memo', img: '/icons/memo.png', label: 'Memo', tint: 't-red' },
+    { to: '/agm', img: '/icons/mesyuarat.png', label: 'Mesyuarat', tint: 't-green' },
   ]
 
-  const memoCard = (m: MemoLite, i: number) => {
-    const dm = dayMonth(m.published_at)
-    const flag = m.pinned ? 'Disemat' : !read.has(m.id) ? 'Baru' : m.audience === 'kelas' ? 'Kelas' : 'Umum'
-    return (
-      <Link key={m.id} to={`/memo#${m.id}`} className="memo-card" style={{ background: tintBg(i) }}>
-        <div className="top"><span>{dm.day} {dm.month}</span><span className="flag">{flag}</span></div>
-        <div className="title">{m.title}</div>
-        <div className="by">{m.author?.full_name ?? 'PIBG'}</div>
-      </Link>
-    )
-  }
-
-  const danaCard = (
-    <div className="pcard">
-      <div className="pcard-head"><h2>Dana PIBG {fund?.year ?? ''}</h2><Link to="/dana">Butiran →</Link></div>
-      <div className="ring-row">
-        <Ring pct={paidPct} large={!mobile} />
-        <div><b>{fund?.families_paid ?? 0} daripada {fund?.families_total ?? 0} keluarga</b><span className="sub">telah melunaskan yuran tahun ini</span></div>
-      </div>
-      <div className="mini-tiles">
-        <div><span>Dikutip</span><b>{shortRM(Number(fund?.yuran_collected ?? 0) + Number(fund?.donations ?? 0))}</b></div>
-        <div><span>Belanja</span><b>{shortRM(fund?.expenses)}</b></div>
-        <div className={surplus < 0 ? 'neg' : 'pos'}><span>{surplus < 0 ? 'Kurangan' : 'Lebihan'}</span><b>{shortRM(surplus)}</b></div>
-      </div>
-    </div>
-  )
+  const memoCard = (m: MemoLite, i: number) => <MemoTile key={m.id} m={m} i={i} read={read} />
+  const danaCard = <DanaCard fund={fund} large={!mobile} />
 
   const drivesBlock = drives.length > 0 && (
     <div className={mobile ? 'home-sec' : ''} style={mobile ? undefined : { marginTop: 20 }}>
@@ -121,9 +95,7 @@ export default function ParentHome() {
           <div className="hero-hi">Hai, {name}!</div>
         </div>
         {feeCard}
-        <div className="quick">
-          {tiles.map((t) => <Link key={t.to} to={t.to} state={t.state}><span className={`tile ${t.t}`} aria-hidden="true">{t.icon}</span>{t.label}</Link>)}
-        </div>
+        <QuickTiles tiles={tiles} mobile />
         {memos.length > 0 && (
           <div className="home-sec">
             <div className="sec-head"><h2>Memo terkini</h2><Link to="/memo">Semua →</Link></div>
@@ -149,12 +121,8 @@ export default function ParentHome() {
         </div>
         {feeCard}
       </div>
-      <div className="dquick">
-        {tiles.map((t) => (
-          <Link key={t.to} to={t.to} state={t.state} className={t.t}><span className="ico" aria-hidden="true">{t.icon}</span>{t.label}</Link>
-        ))}
-      </div>
-      <div className="pgrid">
+      <QuickTiles tiles={tiles} mobile={false} />
+      <div className="pgrid eq">
         <div className="pcard">
           <div className="pcard-head"><h2>Memo terkini</h2><Link to="/memo">Semua memo →</Link></div>
           {memos.length ? <div className="memo-grid">{memos.map(memoCard)}</div> : <div className="pempty">Belum ada memo.</div>}

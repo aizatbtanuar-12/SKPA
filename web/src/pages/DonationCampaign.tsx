@@ -97,20 +97,21 @@ export default function DonationCampaign() {
           {isStaff && <Link className="btn" to={`/kempen/${c.id}`}>Urus kutipan ini</Link>}
         </>} />
 
-      <div className="grid2 campaign-top">
-        {poster ? <img src={poster} alt={`Poster ${c.title}`} className="campaign-hero" /> : null}
-        <div>
-          <div className="stats tight">
-            <Stat label="Terkumpul" value={rm(p?.collected ?? 0)} sub={c.target_amount ? `sasaran ${rm(c.target_amount)}` : undefined} tone="green" />
-            <Stat label="Penyumbang" value={p?.donors ?? 0} sub={left != null && left >= 0 ? `${left} hari lagi` : undefined} />
-          </div>
-          {percent != null && <div className="progress" title={`${percent}% daripada sasaran`}><div style={{ width: `${percent}%` }} /></div>}
-          {c.description && <p className="pre">{c.description}</p>}
-        </div>
+      <div className="stats kpis">
+        <Stat label="Terkumpul" value={rm(p?.collected ?? 0)} sub={c.target_amount ? `sasaran ${rm(c.target_amount)}` : undefined} tone="green" />
+        <Stat label="Penyumbang" value={p?.donors ?? 0} sub="keluarga / individu" />
+        {percent != null && <Stat label="Pencapaian" value={`${percent}%`} sub={<span className="progress thin" style={{ display: 'block', marginTop: 6 }}><span style={{ display: 'block', height: '100%', width: `${percent}%` }} /></span>} tone="amber" />}
+        {left != null && left >= 0 && <Stat label="Baki masa" value={`${left} hari`} sub={c.end_date ? `hingga ${date(c.end_date)}` : undefined} />}
       </div>
 
-      {c.status === 'aktif' ? (
-        <div className="grid2">
+      <div className={`campaign-layout ${poster ? '' : 'no-poster'}`}>
+        <div className="campaign-side">
+          {poster && <img src={poster} alt={`Poster ${c.title}`} className="campaign-hero" />}
+          {c.description && <Card><p className="pre" style={{ margin: 0 }}>{c.description}</p></Card>}
+        </div>
+        <div className="campaign-main">
+          {c.status === 'aktif' ? (
+            <>
           <Card title="1. Pindahkan sumbangan">
             <dl className="dl">
               <dt>Bank</dt><dd>{settings?.bank_name || '-'}</dd>
@@ -153,10 +154,12 @@ export default function DonationCampaign() {
               <button className="btn primary" disabled={busy || ocr.state === 'reading'}>{busy ? 'Menghantar…' : 'Hantar sumbangan'}</button>
             </form>
           </Card>
+            </>
+          ) : (
+            <div className="callout"><strong>Kutipan ini {c.status === 'ditutup' ? 'telah ditutup' : 'belum dibuka'}.</strong><p>Terima kasih kepada semua penyumbang.</p></div>
+          )}
         </div>
-      ) : (
-        <div className="callout"><strong>Kutipan ini {c.status === 'ditutup' ? 'telah ditutup' : 'belum dibuka'}.</strong><p>Terima kasih kepada semua penyumbang.</p></div>
-      )}
+      </div>
 
       <Card title="Sumbangan saya">
         {mine.length ? (

@@ -72,14 +72,14 @@ export default function Collection() {
       <Card>
         {shown.length ? (
           <table className="table">
-            <thead><tr><th>Kod</th><th>Anak</th><th>Penjaga</th><th>Dibayar</th><th>Status</th><th /></tr></thead>
+            <thead><tr><th>Kod</th><th>Anak</th><th>Penjaga</th><th className="num">Dibayar</th><th>Status</th><th /></tr></thead>
             <tbody>
               {shown.map((r) => (
                 <tr key={r.family_id}>
                   <td className="mono">{r.family_code}</td>
                   <td className="small">{r.children}</td>
                   <td className="small">{r.guardians}<div className="muted">{r.phone}</div></td>
-                  <td>{rm(r.paid)}</td>
+                  <td className="num">{rm(r.paid)}</td>
                   <td><Badge tone={feeStatusTone[r.status]}>{feeStatusLabel[r.status]}</Badge></td>
                   <td>
                     {r.status === 'menunggu' && <Link to="/semakan-bayaran" className="btn ghost small">Semak</Link>}
