@@ -34,7 +34,7 @@ export default function DonationReceipt() {
       setData({
         title: 'RESIT SUMBANGAN', item: `Sumbangan: ${d.campaigns?.title ?? ''}`,
         receipt_no: d.receipt_no, date: d.reviewed_at, family_code: familyCode || '-', guardians,
-        year: new Date(d.reviewed_at ?? d.submitted_at).getFullYear(), amount: d.amount, method: d.method, reference: d.reference,
+        year: new Date(d.reviewed_at ?? d.submitted_at).getFullYear(), amount: d.amount, method: d.method, reference: d.reference, paid_on: d.paid_on,
         children: kids.map((k) => ({ name: k.full_name, className: k.classes?.name ?? '' })),
       })
     })()

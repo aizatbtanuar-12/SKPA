@@ -6,13 +6,15 @@ import { useAction, useToast } from '../../components/ui'
 import { readReceipt, type ReceiptInfo } from '../../lib/receiptOcr'
 import { compressImage } from '../../lib/image'
 import { useFamily, levelName } from '../../lib/useFamily'
-import { date, feeStatusLabel, payLabel, rm } from '../../lib/util'
+import { date, feeStatusLabel, payLabel, rm, todayISO } from '../../lib/util'
 import { PageHead, PBadge, PPager, Seg, initials, tintBg, tintInk, useIsMobile, usePaged, useScrollTop, type PTone } from '../../components/pui'
 
 export interface Payment {
   id: number; family_id: number; year: number; amount: number; method: string; reference: string | null
   proof_path: string | null; status: string; receipt_no: string | null; submitted_at: string
   review_note: string | null; reviewed_at: string | null
+  /** date on the bank receipt (migration 011) */
+  paid_on?: string | null
 }
 
 const feeTone: Record<string, PTone> = { lunas: 'green', menunggu: 'amber', belum: 'red' }
@@ -30,6 +32,7 @@ export default function ParentFees() {
   const [step, setStep] = useState(0)
   const [amount, setAmount] = useState('')
   const [reference, setReference] = useState('')
+  const [paidOn, setPaidOn] = useState(todayISO())
   const [file, setFile] = useState<File | null>(null)
   const [ocr, setOcr] = useState<{ state: 'idle' | 'reading' | 'done' | 'failed'; pct: number; info?: ReceiptInfo }>({ state: 'idle', pct: 0 })
   const hist = usePaged(pays, 3)
@@ -50,6 +53,7 @@ export default function ParentFees() {
       setOcr({ state: 'done', pct: 100, info })
       if (info.reference) setReference(info.reference)
       if (info.amount) setAmount(String(info.amount))
+      if (info.paidOn) setPaidOn(info.paidOn)
     } catch {
       setOcr({ state: 'failed', pct: 0 })
     }
@@ -58,6 +62,7 @@ export default function ParentFees() {
   const submit = () => run(async () => {
     if (!file) throw new Error('Sila pilih fail bukti bayaran.')
     if (!reference.trim()) throw new Error('Sila isi no. rujukan transaksi.')
+    if (!paidOn || paidOn > todayISO()) throw new Error('Sila pilih tarikh bayaran yang betul (bukan tarikh akan datang).')
     const upFile = await compressImage(file)
     if (upFile.size > 5 * 1024 * 1024) throw new Error('Saiz fail maksimum 5MB.')
     const ext = upFile.type === 'application/pdf' ? 'pdf' : upFile.type === 'image/jpeg' ? 'jpg' : (upFile.name.split('.').pop()?.toLowerCase() || 'jpg')
@@ -66,9 +71,9 @@ export default function ParentFees() {
     if (up.error) throw new Error('Gagal memuat naik: ' + up.error.message)
     check(await supabase.from('fee_payments').insert({
       family_id: familyId, year: settings!.current_year, amount: Number(amount || balance),
-      method: 'pindahan', reference: reference.replace(/\s+/g, '').toUpperCase() || null, proof_path: path, submitted_by: profile!.id,
+      method: 'pindahan', reference: reference.replace(/\s+/g, '').toUpperCase() || null, proof_path: path, submitted_by: profile!.id, paid_on: paidOn,
     }))
-    setFile(null); setReference(''); setAmount(''); setOcr({ state: 'idle', pct: 0 }); setStep(0)
+    setFile(null); setReference(''); setAmount(''); setPaidOn(todayISO()); setOcr({ state: 'idle', pct: 0 }); setStep(0)
     await reload()
   }, 'Bukti bayaran dihantar. Bendahari akan menyemak dan mengeluarkan resit.')
 
@@ -187,6 +192,7 @@ export default function ParentFees() {
               <div className="pinfo green">
                 {ocr.info.reference || ocr.info.amount ? '✓ Maklumat dibaca daripada resit.' : 'Tidak dapat membaca no. rujukan. Sila taip pada langkah seterusnya.'}
                 {ocr.info.familyCode === fee.family_code && <> Kod keluarga {fee.family_code} dijumpai. ✓</>}
+                {ocr.info.paidOn && <> Tarikh bayaran: {date(ocr.info.paidOn)}.</>}
               </div>
               {ocr.info.familyCode && ocr.info.familyCode !== fee.family_code && (
                 <div className="pinfo red">Kod keluarga pada resit ({ocr.info.familyCode}) berbeza daripada kod keluarga anda ({fee.family_code}). Pastikan anda memuat naik resit yang betul.</div>
@@ -208,6 +214,9 @@ export default function ParentFees() {
           <label className="pfield"><span>No. rujukan transaksi</span>
             <input className="mono" value={reference} onChange={(e) => setReference(e.target.value)} />
             <small>Huruf O dan nombor 0 kadangkala tertukar — sila semak.</small></label>
+          <label className="pfield"><span>Tarikh bayaran</span>
+            <input type="date" value={paidOn} max={todayISO()} onChange={(e) => setPaidOn(e.target.value)} />
+            <small>{ocr.info?.paidOn ? 'Dibaca daripada resit — sila semak.' : 'Tarikh pindahan dibuat, seperti pada resit bank.'}</small></label>
         </div>
       )}
 
@@ -227,7 +236,7 @@ export default function ParentFees() {
           {hist.slice.map((p) => (
             <div key={p.id} className="hist-row">
               <span className="year-tile">{p.year}</span>
-              <div><div className="amt">{rm(p.amount)}</div><div className="when">{date(p.submitted_at)}</div></div>
+              <div><div className="amt">{rm(p.amount)}</div><div className="when">{p.paid_on ? `Dibayar ${date(p.paid_on)}` : date(p.submitted_at)}</div></div>
               <div className="right">
                 <PBadge tone={payTone[p.status]}>{payLabel[p.status]}</PBadge>
                 {p.receipt_no && <Link to={`/resit/${p.id}`} className="mono" translate="no">{p.receipt_no}</Link>}

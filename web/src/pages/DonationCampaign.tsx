@@ -7,7 +7,7 @@ import { Badge, Card, Empty, Field, Spinner, Stat, useAction, useToast } from '.
 import { readReceipt, type ReceiptInfo } from '../lib/receiptOcr'
 import { compressImage } from '../lib/image'
 import { campaignStatus, daysLeft, loadProgress, pct, posterUrl, transferRemark, type Campaign, type Donation, type Progress } from '../lib/donations'
-import { date, dateTime, payLabel, payTone, rm } from '../lib/util'
+import { date, dateTime, payLabel, payTone, rm, todayISO } from '../lib/util'
 import { DataTable } from '../components/DataTable'
 
 export default function DonationCampaign() {
@@ -22,6 +22,7 @@ export default function DonationCampaign() {
   const [mine, setMine] = useState<Donation[]>([])
   const [amount, setAmount] = useState('')
   const [reference, setReference] = useState('')
+  const [paidOn, setPaidOn] = useState(todayISO())
   const [file, setFile] = useState<File | null>(null)
   const [ocr, setOcr] = useState<{ state: 'idle' | 'reading' | 'done' | 'failed'; pct: number; info?: ReceiptInfo }>({ state: 'idle', pct: 0 })
   const { busy, run } = useAction()
@@ -65,6 +66,7 @@ export default function DonationCampaign() {
       setOcr({ state: 'done', pct: 100, info })
       if (info.reference) setReference(info.reference)
       if (info.amount) setAmount(String(info.amount))
+      if (info.paidOn) setPaidOn(info.paidOn)
     } catch {
       setOcr({ state: 'failed', pct: 0 })
     }
@@ -73,6 +75,7 @@ export default function DonationCampaign() {
   const submit = (e: FormEvent) => { e.preventDefault(); run(async () => {
     if (!file) throw new Error('Sila pilih fail bukti bayaran.')
     if (!(Number(amount) > 0)) throw new Error('Sila masukkan jumlah sumbangan.')
+    if (!paidOn || paidOn > todayISO()) throw new Error('Sila pilih tarikh bayaran yang betul (bukan tarikh akan datang).')
     const upFile = await compressImage(file)
     if (upFile.size > 5 * 1024 * 1024) throw new Error('Saiz fail maksimum 5MB.')
     const ext = upFile.type === 'application/pdf' ? 'pdf' : upFile.type === 'image/jpeg' ? 'jpg' : (upFile.name.split('.').pop()?.toLowerCase() || 'jpg')
@@ -81,9 +84,9 @@ export default function DonationCampaign() {
     if (up.error) throw new Error('Gagal memuat naik: ' + up.error.message)
     check(await supabase.from('donations').insert({
       campaign_id: c.id, family_id: familyId, amount: Number(amount), method: 'pindahan',
-      reference: reference.replace(/\s+/g, '').toUpperCase() || null, proof_path: path, submitted_by: profile!.id,
+      reference: reference.replace(/\s+/g, '').toUpperCase() || null, proof_path: path, submitted_by: profile!.id, paid_on: paidOn,
     }))
-    setFile(null); setReference(''); setOcr({ state: 'idle', pct: 0 })
+    setFile(null); setReference(''); setPaidOn(todayISO()); setOcr({ state: 'idle', pct: 0 })
     await load()
   }, 'Terima kasih! Bukti sumbangan dihantar. Bendahari akan menyemak dan mengeluarkan resit.') }
 
@@ -152,6 +155,7 @@ export default function DonationCampaign() {
               <div className="row gap wrap">
                 <Field label="Jumlah (RM)"><input required type="number" min="1" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} /></Field>
                 <Field label="No. rujukan transaksi"><input required className="mono" value={reference} onChange={(e) => setReference(e.target.value)} /></Field>
+                <Field label="Tarikh bayaran" hint={ocr.info?.paidOn ? 'Dibaca daripada resit' : undefined}><input required type="date" value={paidOn} max={todayISO()} onChange={(e) => setPaidOn(e.target.value)} /></Field>
               </div>
               <button className="btn primary" disabled={busy || ocr.state === 'reading'}>{busy ? 'Menghantar…' : 'Hantar sumbangan'}</button>
             </form>
@@ -167,7 +171,7 @@ export default function DonationCampaign() {
         <DataTable rows={mine} rowKey={(d) => d.id} pageSize={5} initialSort={{ key: 'tarikh', dir: 'desc' }}
           empty="Anda belum menyumbang untuk kutipan ini."
           cols={[
-            { key: 'tarikh', label: 'Tarikh', sort: (d) => d.submitted_at, render: (d) => dateTime(d.submitted_at) },
+            { key: 'tarikh', label: 'Tarikh bayar', sort: (d) => d.paid_on ?? d.submitted_at, render: (d) => (d.paid_on ? date(d.paid_on) : dateTime(d.submitted_at)) },
             { key: 'jumlah', label: 'Jumlah', num: true, sort: (d) => Number(d.amount), render: (d) => rm(d.amount) },
             { key: 'status', label: 'Status', sort: (d) => payLabel[d.status], render: (d) => <><Badge tone={payTone[d.status]}>{payLabel[d.status]}</Badge>{d.status === 'ditolak' && d.review_note && <div className="muted small">{d.review_note}</div>}</> },
             { key: 'resit', label: 'Resit', sort: (d) => d.receipt_no, render: (d) => (d.receipt_no ? <Link className="link mono small" to={`/resit-sumbangan/${d.id}`}>{d.receipt_no}</Link> : '-') },

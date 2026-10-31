@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { supabase, check } from '../../lib/supabase'
 import { PageHead } from '../../components/Layout'
 import { Badge, Card, Empty, Field, Modal, useAction } from '../../components/ui'
-import { dateTime, payLabel, payTone, rm } from '../../lib/util'
+import { date, dateTime, payLabel, payTone, rm } from '../../lib/util'
 import type { Payment } from '../parent/ParentFees'
 import { DataTable } from '../../components/DataTable'
 
@@ -40,6 +40,7 @@ export default function PaymentReview() {
           empty={`Tiada bayaran ${status ? payLabel[status].toLowerCase() : ''}.`}
           cols={[
             { key: 'dihantar', label: 'Dihantar', sort: (r) => r.submitted_at, render: (r) => dateTime(r.submitted_at) },
+            { key: 'dibayar', label: 'Tarikh bayar', sort: (r) => r.paid_on, render: (r) => (r.paid_on ? date(r.paid_on) : '-') },
             { key: 'kod', label: 'Keluarga', sort: (r) => r.families?.family_code, className: 'mono', render: (r) => r.families?.family_code },
             { key: 'oleh', label: 'Oleh', sort: (r) => r.submitter?.full_name, render: (r) => <>{r.submitter?.full_name}<div className="muted small">{r.submitter?.phone}</div></> },
             { key: 'jumlah', label: 'Jumlah', num: true, sort: (r) => Number(r.amount), render: (r) => <>{rm(r.amount)}{r.reference && <div className="muted small mono">{r.reference}</div>}</> },
@@ -83,7 +84,7 @@ function Review({ p, onClose, onDone }: { p: Row; onClose: () => void; onDone: (
           : isPdf ? <a className="btn" href={url} target="_blank" rel="noreferrer">Buka PDF bukti bayaran</a>
           : <a href={url} target="_blank" rel="noreferrer"><img src={url} alt="Bukti bayaran" /></a>}
       </div>
-      <p className="small">No. rujukan: <b className="mono">{p.reference || '-'}</b> · Dihantar {dateTime(p.submitted_at)}</p>
+      <p className="small">No. rujukan: <b className="mono">{p.reference || '-'}</b>{p.paid_on && <> · Dibayar <b>{date(p.paid_on)}</b></>} · Dihantar {dateTime(p.submitted_at)}</p>
       <p className="muted small">Pastikan no. rujukan dan jumlah sepadan dengan penyata bank PIBG sebelum meluluskan.</p>
       {dupes.length > 0 && (
         <div className="alert err small">

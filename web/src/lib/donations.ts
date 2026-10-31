@@ -29,6 +29,8 @@ export interface Donation {
   receipt_no: string | null
   submitted_at: string
   reviewed_at: string | null
+  /** date on the bank receipt (migration 011) */
+  paid_on?: string | null
   review_note: string | null
 }
 

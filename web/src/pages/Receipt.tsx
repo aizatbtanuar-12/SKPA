@@ -28,7 +28,7 @@ export default function Receipt() {
         .sort((a, b) => (a.classes?.year_level ?? 99) - (b.classes?.year_level ?? 99) || a.full_name.localeCompare(b.full_name))
       setData({
         receipt_no: pay.receipt_no, date: pay.reviewed_at, family_code: fam?.family_code ?? '',
-        guardians: fam?.guardians ?? '', year: pay.year, amount: pay.amount, method: pay.method, reference: pay.reference,
+        guardians: fam?.guardians ?? '', year: pay.year, amount: pay.amount, method: pay.method, reference: pay.reference, paid_on: pay.paid_on,
         children: kids.map((k) => ({ name: k.full_name, className: k.classes?.name ?? '' })),
       })
     })()

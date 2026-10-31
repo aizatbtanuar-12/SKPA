@@ -1,5 +1,5 @@
 import type { Settings } from '../lib/supabase'
-import { dateTime, rm } from '../lib/util'
+import { date, dateTime, rm } from '../lib/util'
 
 export interface ReceiptData {
   receipt_no: string | null
@@ -11,6 +11,8 @@ export interface ReceiptData {
   amount: number
   method: string
   reference: string | null
+  /** date the parent paid (from the bank receipt) */
+  paid_on?: string | null
   /** donation receipts: own title and item text */
   title?: string
   item?: string
@@ -39,6 +41,7 @@ export default function ReceiptDoc({ s, d }: { s: Partial<Settings>; d: ReceiptD
         <dt>Diterima daripada</dt><dd translate="no">{d.guardians}</dd>
         <dt>Perkara</dt><dd>{d.item || `Yuran PIBG sekeluarga tahun ${d.year}`}</dd>
         <dt>Kaedah</dt><dd>{methodLabel[d.method] ?? d.method}{d.reference ? <> · <span className="mono" translate="no">{d.reference}</span></> : ''}</dd>
+        {d.paid_on && <><dt>Tarikh bayaran</dt><dd>{date(d.paid_on)}</dd></>}
       </dl>
       {d.children.length > 0 && <div className="receipt-children">
         <span className="receipt-label">Anak ({d.children.length})</span>

@@ -43,6 +43,7 @@ You need a free [Supabase](https://supabase.com) account (database + login + fil
 8. Then `008_family_count.sql` → **Run**. Counts families that have paid or are waiting for their children to be verified in the "x daripada y keluarga" figure.
 9. Then `009_family_rules.sql` → **Run**. Adds the Pengerusi PIBG role, makes IC numbers compulsory, records each parent's spouse, and stops a student IC being registered under two families.
 10. Then `010_access.sql` → **Run**. Adds the Bendahari PIBG role, **Tetapan → Akses pengguna** (the administrator decides what each role may change) and the **Laporan** page. Afterwards, in **Pengguna & Kelas**, change your treasurer's role to *Bendahari PIBG* (AJK PIBG no longer approves payments by default).
+11. Then `011_spouse_codes.sql` → **Run**. Links spouses' accounts and joins their family records, renumbers family codes without gaps (K00001, K00002, …), and stores the payment date read from the bank receipt.
 
 ### 2. Configure sign-in e-mails (important)
 Supabase's built-in e-mail sender only delivers to your own Supabase team members, and only 2 e-mails per hour. Parents would never receive their confirmation e-mail. Pick one option:
@@ -153,6 +154,9 @@ supabase/migrations/009_family_rules.sql    chairman role, compulsory IC, spouse
 supabase/tests/30_family_rules.sql          tests for 009
 supabase/migrations/010_access.sql          Bendahari role, per-role permissions, reports
 supabase/tests/40_access.sql                tests for 010
+supabase/migrations/011_spouse_codes.sql    spouse linking, gap-free family codes, payment date
+supabase/tests/50_spouse_codes.sql          tests for 011
+web/scripts/receipt-date.test.mts           receipt date reader cases (npx tsx scripts/receipt-date.test.mts)
 supabase/tests/                      scenario tests (12 scenarios)
 web/src/pages/                       one file per screen (parent/, teacher/, staff/, admin/)
 web/src/lib/                         Supabase client, auth/roles, helpers
