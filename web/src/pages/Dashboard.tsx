@@ -5,10 +5,12 @@ import { useAuth, useRole } from '../lib/auth'
 import { PageHead } from '../components/Layout'
 import { Badge, Card, Empty, Stat } from '../components/ui'
 import { date, feeStatusLabel, feeStatusTone, rm } from '../lib/util'
+import CampaignCard from '../components/CampaignCard'
+import { loadProgress, type Campaign, type Progress } from '../lib/donations'
 
 export interface FundSummary {
   year: number; families_total: number; families_paid: number; yuran_collected: number
-  other_income: number; expenses: number; balance: number
+  donations: number; other_income: number; expenses: number; balance: number
 }
 export interface FeeStatus {
   family_id: number; family_code: string; year: number; fee_due: number; paid: number
@@ -24,8 +26,13 @@ export default function Dashboard() {
   const [memos, setMemos] = useState<MemoLite[]>([])
   const [fee, setFee] = useState<FeeStatus | null>(null)
   const [counts, setCounts] = useState({ claims: 0, payments: 0, unpaid: 0, myClaims: 0 })
+  const [drives, setDrives] = useState<Campaign[]>([])
+  const [drivesProg, setDrivesProg] = useState<Record<number, Progress>>({})
 
   useEffect(() => {
+    supabase.from('campaigns').select('*').eq('status', 'aktif').order('created_at', { ascending: false }).limit(3)
+      .then(({ data }) => setDrives((data as Campaign[]) ?? []))
+    loadProgress().then(setDrivesProg)
     supabase.rpc('fund_summary').then(({ data }) => setFund((data as FundSummary[] | null)?.[0] ?? null))
     supabase.from('memos').select('id,title,published_at,pinned').order('pinned', { ascending: false })
       .order('published_at', { ascending: false }).limit(4).then(({ data }) => setMemos((data as MemoLite[]) ?? []))
@@ -95,11 +102,20 @@ export default function Dashboard() {
         </div>
       )}
 
+      {drives.length > 0 && (
+        <Card title="Kutipan dana sedang berjalan" actions={<Link to="/sumbangan" className="link">Semua sumbangan</Link>}>
+          <div className="campaign-grid">
+            {drives.map((c) => <CampaignCard key={c.id} c={c} p={drivesProg[c.id]} to={`/sumbangan/${c.id}`} compact />)}
+          </div>
+        </Card>
+      )}
+
       <div className="grid2">
         <Card title={`Dana PIBG ${fund?.year ?? ''}`} actions={<Link to="/dana" className="link">Butiran</Link>}>
           {fund ? (
             <div className="stats tight">
               <Stat label="Yuran dikutip" value={rm(fund.yuran_collected)} sub={`${fund.families_paid} / ${fund.families_total} keluarga`} />
+              <Stat label="Sumbangan" value={rm(fund.donations)} />
               <Stat label="Perbelanjaan" value={rm(fund.expenses)} />
               <Stat label="Lebihan / kurangan" value={rm(fund.balance)} tone={Number(fund.balance) < 0 ? 'red' : 'green'} />
             </div>

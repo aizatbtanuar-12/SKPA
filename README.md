@@ -5,6 +5,7 @@ A web portal for the PIBG (Parent-Teacher Association) of SK Puncak Alam. It wor
 - **Parents** register, add their children, see the family's yuran status, upload proof of payment, get an official receipt, read memos, see how PIBG funds are used, and check in and vote at the AGM.
 - **Class teachers (Guru Kelas)** verify the children parents register for their class (match to an existing record or create a new one) and see their class's yuran status.
 - **Ketua Panitia** post memos and propose programs.
+- **Donation drives (Kutipan Dana)** such as Smart TV or water filters: the committee creates a drive with a short code (e.g. `SMARTTV`), poster, optional target and end date. Parents transfer any amount to the same PIBG account with the remark `SMARTTV K00012` (drive code + family code), upload proof, and get a separate donation receipt (`SUMB-SKPA/2026/0001`). Everyone sees progress and number of donors; only the committee sees who gave what. Includes a ready-made WhatsApp announcement and per-class participation.
 - **AJK PIBG / Bendahari** manage student and family records, import lists from Excel, approve payments, record cash, publish income and expenses, and run the AGM.
 - **Pentadbir (admin)** assign roles and class teachers.
 
@@ -35,6 +36,7 @@ You need a free [Supabase](https://supabase.com) account (database + login + fil
 4. New query again → paste `supabase/migrations/003_profile_repair.sql` → **Run**. This repairs any account registered before steps 2–3 were done, and is safe to run again any time.
 5. New query again → paste `supabase/migrations/004_class_levels.sql` → **Run**. Adds Prasekolah and PPKI classes and class rename/delete.
 6. New query again → paste `supabase/migrations/005_receipt_format.sql` → **Run**. Lets admins customise the receipt (Tetapan → Format resit).
+7. Then `006_donations.sql` and `007_poster_storage.sql`, each → **Run**. Adds donation drives (Kutipan Dana) and poster uploads.
 
 ### 2. Configure sign-in e-mails (important)
 Supabase's built-in e-mail sender only delivers to your own Supabase team members, and only 2 e-mails per hour. Parents would never receive their confirmation e-mail. Pick one option:
@@ -128,6 +130,7 @@ psql -d pibg_test -f supabase/tests/00_supabase_stub.sql
 psql -d pibg_test -f supabase/migrations/001_schema.sql
 psql -d pibg_test -f supabase/migrations/002_storage.sql
 psql -d pibg_test -f supabase/tests/10_scenarios.sql   # ends with "ALL TESTS PASSED"
+psql -d pibg_test -f supabase/tests/20_donations.sql   # ends with "DONATION TESTS PASSED"
 ```
 
 ### Project layout
@@ -137,6 +140,8 @@ supabase/migrations/002_storage.sql  private bucket for payment proofs
 supabase/migrations/003_profile_repair.sql  repairs accounts created before setup
 supabase/migrations/004_class_levels.sql    Prasekolah (0) & PPKI (7) levels, tidy class names
 supabase/migrations/005_receipt_format.sql  receipt header/footer/signature settings
+supabase/migrations/006_donations.sql       donation drives, donations, donation receipts
+supabase/migrations/007_poster_storage.sql  public bucket for drive posters
 supabase/tests/                      scenario tests (12 scenarios)
 web/src/pages/                       one file per screen (parent/, teacher/, staff/, admin/)
 web/src/lib/                         Supabase client, auth/roles, helpers

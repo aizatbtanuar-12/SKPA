@@ -63,15 +63,14 @@ export default function PaymentReview() {
 function Review({ p, onClose, onDone }: { p: Row; onClose: () => void; onDone: () => void }) {
   const [url, setUrl] = useState<string | null>(null)
   const [note, setNote] = useState('')
-  const [dupes, setDupes] = useState<{ id: number; status: string; families: { family_code: string } | null }[]>([])
+  const [dupes, setDupes] = useState<{ kind: string; family_code: string | null; label: string; status: string }[]>([])
   const { busy, run } = useAction()
 
-  // Same bank reference already used on another payment? (re-used / shared receipt)
+  // Same bank reference already used on another yuran payment or donation? (re-used / shared receipt)
   useEffect(() => {
-    const ref = p.reference?.replace(/\s+/g, '').toUpperCase()
-    if (!ref || ref.length < 6) return
-    supabase.from('fee_payments').select('id,status,families(family_code)').eq('reference', ref).neq('id', p.id)
-      .then(({ data }) => setDupes((data as unknown as typeof dupes) ?? []))
+    if (!p.reference || p.reference.replace(/\s+/g, '').length < 6) return
+    supabase.rpc('reference_usage', { p_reference: p.reference, p_exclude_kind: 'yuran', p_exclude_id: p.id })
+      .then(({ data }) => setDupes((data as typeof dupes) ?? []))
   }, [p.id, p.reference])
 
   useEffect(() => {
@@ -94,7 +93,7 @@ function Review({ p, onClose, onDone }: { p: Row; onClose: () => void; onDone: (
       {dupes.length > 0 && (
         <div className="alert err small">
           ⚠ No. rujukan ini telah digunakan untuk {dupes.length} bayaran lain:{' '}
-          {dupes.map((d) => `${d.families?.family_code ?? '?'} (${payLabel[d.status].toLowerCase()})`).join(', ')}.
+          {dupes.map((d) => `${d.label} ${d.family_code ?? ''} (${payLabel[d.status]?.toLowerCase() ?? d.status})`).join(', ')}.
           Kemungkinan resit yang sama dimuat naik dua kali.
         </div>
       )}
