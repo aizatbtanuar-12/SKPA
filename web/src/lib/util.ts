@@ -13,6 +13,9 @@ export const normIC = (v: string) => v.replace(/\D/g, '')
 export const maskIC = (v: string | null | undefined) => (v ? '••••••-••-' + v.slice(-4) : '-')
 export const fmtIC = (v: string | null | undefined) =>
   v && v.length === 12 ? `${v.slice(0, 6)}-${v.slice(6, 8)}-${v.slice(8)}` : v || '-'
+/** today as YYYY-MM-DD in the user's own time zone */
+export const todayISO = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` }
+
 export const validIC = (v: string) => /^\d{12}$/.test(normIC(v))
 
 export const roleLabel: Record<Role, string> = {

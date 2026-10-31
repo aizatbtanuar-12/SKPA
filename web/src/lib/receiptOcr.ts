@@ -8,7 +8,53 @@ export interface ReceiptInfo {
   reference: string | null
   amount: number | null
   familyCode: string | null
+  /** payment date on the receipt, YYYY-MM-DD */
+  paidOn: string | null
   text: string
+}
+
+// --- payment date ---
+const MONTH: Record<string, number> = {
+  jan: 1, januari: 1, january: 1, feb: 2, februari: 2, february: 2, mar: 3, mac: 3, march: 3, apr: 4, april: 4,
+  may: 5, mei: 5, jun: 6, june: 6, jul: 7, julai: 7, july: 7, aug: 8, ogo: 8, ogos: 8, august: 8, sep: 9, sept: 9, september: 9,
+  oct: 10, okt: 10, oktober: 10, october: 10, nov: 11, november: 11, dec: 12, dis: 12, disember: 12, december: 12,
+}
+const MON = Object.keys(MONTH).sort((a, b) => b.length - a.length).join('|')
+const DATE_LABEL = /(transaction\s*date|payment\s*date|transfer\s*date|date\s*(?:&|and)?\s*time|tarikh(?:\s*(?:&|dan)?\s*masa)?(?:\s*(?:transaksi|bayaran|pindahan))?|\bdate\b|\bon\b)/i
+const DATE_RES: { re: RegExp; get: (m: RegExpMatchArray) => [number, number, number] }[] = [
+  // 2026-11-01
+  { re: /\b(20\d{2})[-/.](\d{1,2})[-/.](\d{1,2})\b/, get: (m) => [+m[1], +m[2], +m[3]] },
+  // 01/11/2026, 01-11-26 (Malaysian day/month order)
+  { re: /\b(\d{1,2})[/.-](\d{1,2})[/.-](\d{4}|\d{2})\b/, get: (m) => [m[3].length === 2 ? 2000 + +m[3] : +m[3], +m[2], +m[1]] },
+  // 1 Nov 2026, 01 NOV 26, 1-Okt-2026
+  { re: new RegExp(`\\b(\\d{1,2})[\\s\\-/.]*(${MON})[a-z]*[\\s\\-/.,]*(\\d{4}|\\d{2})\\b`, 'i'), get: (m) => [m[3].length === 2 ? 2000 + +m[3] : +m[3], MONTH[m[2].toLowerCase()], +m[1]] },
+  // Nov 1, 2026
+  { re: new RegExp(`\\b(${MON})[a-z]*\\s+(\\d{1,2}),?\\s+(\\d{4})\\b`, 'i'), get: (m) => [+m[3], MONTH[m[1].toLowerCase()], +m[2]] },
+]
+function dateIn(s: string, today: Date): string | null {
+  for (const { re, get } of DATE_RES) {
+    const m = s.match(re)
+    if (!m) continue
+    const [y, mo, d] = get(m)
+    if (!mo || mo > 12 || d < 1 || d > 31) continue
+    const dt = new Date(Date.UTC(y, mo - 1, d))
+    if (dt.getUTCDate() !== d) continue // 31 Feb etc.
+    const t = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate())
+    // a payment receipt is not from the future and not more than ~18 months old
+    if (dt.getTime() > t + 86400000 || dt.getTime() < t - 548 * 86400000) continue
+    return `${y}-${String(mo).padStart(2, '0')}-${String(d).padStart(2, '0')}`
+  }
+  return null
+}
+/** Prefer a date on a line labelled as the transaction date; otherwise the first sensible date on the receipt. */
+export function findPaidOn(lines: string[], today = new Date()): string | null {
+  for (let i = 0; i < lines.length; i++) {
+    if (!DATE_LABEL.test(lines[i])) continue
+    const d = dateIn(lines[i], today) ?? (lines[i + 1] ? dateIn(lines[i + 1], today) : null)
+    if (d) return d
+  }
+  for (const l of lines) { const d = dateIn(l, today); if (d) return d }
+  return null
 }
 
 // Labels banks use for the bank's own transaction reference (EN + BM)
@@ -52,7 +98,7 @@ function refFrom(s: string): string | null {
   return null
 }
 
-export function parseReceipt(raw: string): ReceiptInfo {
+export function parseReceipt(raw: string, today = new Date()): ReceiptInfo {
   const text = raw.replace(/\r/g, '')
   const lines = text.split('\n').map((l) => l.trim()).filter(Boolean)
 
@@ -80,7 +126,7 @@ export function parseReceipt(raw: string): ReceiptInfo {
   const fc = text.match(/\bK[O0-9]{5}\b/i)
   const familyCode = fc ? 'K' + fc[0].slice(1).toUpperCase().replace(/O/g, '0') : null
 
-  return { reference, amount, familyCode, text }
+  return { reference, amount, familyCode, paidOn: findPaidOn(lines, today), text }
 }
 
 /** Downscale/greyscale large photos before OCR: faster on phones and usually more accurate */

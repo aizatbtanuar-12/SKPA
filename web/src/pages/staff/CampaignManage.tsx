@@ -69,7 +69,7 @@ export default function CampaignManage() {
   }
 
   const exportCSV = () => download(`sumbangan-${c.code}.csv`, toCSV(rows.map((r) => ({
-    tarikh: r.submitted_at.slice(0, 10), kod_keluarga: r.families?.family_code ?? '', penyumbang: r.donor_name ?? r.submitter?.full_name ?? '',
+    tarikh: r.submitted_at.slice(0, 10), tarikh_bayar: r.paid_on ?? '', kod_keluarga: r.families?.family_code ?? '', penyumbang: r.donor_name ?? r.submitter?.full_name ?? '',
     jumlah: r.amount, kaedah: r.method, rujukan: r.reference ?? '', status: payLabel[r.status], no_resit: r.receipt_no ?? '',
   }))))
 
@@ -115,6 +115,7 @@ export default function CampaignManage() {
             empty={tab === 'semak' ? 'Tiada sumbangan menunggu semakan.' : 'Belum ada sumbangan.'}
             cols={[
               { key: 'dihantar', label: 'Dihantar', sort: (r) => r.submitted_at, className: 'small', render: (r) => dateTime(r.submitted_at) },
+              { key: 'dibayar', label: 'Tarikh bayar', sort: (r) => r.paid_on, className: 'small', render: (r) => (r.paid_on ? date(r.paid_on) : '-') },
               { key: 'siapa', label: 'Keluarga / penyumbang', sort: (r) => r.families?.family_code ?? r.donor_name ?? r.submitter?.full_name, render: (r) => <><span className="mono">{r.families?.family_code ?? ''}</span> {r.donor_name ?? r.submitter?.full_name}</> },
               { key: 'jumlah', label: 'Jumlah', num: true, sort: (r) => Number(r.amount), render: (r) => rm(r.amount) },
               { key: 'ruj', label: 'Rujukan', sort: (r) => r.reference, className: 'mono small', render: (r) => r.reference || '-' },
@@ -154,7 +155,7 @@ function Review({ d, onClose, onDone }: { d: Row; onClose: () => void; onDone: (
           : isPdf ? <a className="btn" href={url} target="_blank" rel="noreferrer">Buka PDF bukti</a>
           : <a href={url} target="_blank" rel="noreferrer"><img src={url} alt="Bukti sumbangan" /></a>}
       </div>
-      <p className="small">No. rujukan: <b className="mono">{d.reference || '-'}</b> · Oleh {d.submitter?.full_name ?? '-'} · {dateTime(d.submitted_at)}</p>
+      <p className="small">No. rujukan: <b className="mono">{d.reference || '-'}</b>{d.paid_on && <> · Dibayar <b>{date(d.paid_on)}</b></>} · Oleh {d.submitter?.full_name ?? '-'} · {dateTime(d.submitted_at)}</p>
       <p className="muted small">Pastikan jumlah dan rujukan sepadan dengan penyata bank PIBG sebelum meluluskan.</p>
       {usage.length > 0 && (
         <div className="alert err small">
