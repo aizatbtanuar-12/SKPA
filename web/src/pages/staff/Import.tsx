@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import Papa from 'papaparse'
 import { supabase, check } from '../../lib/supabase'
 import { useAuth } from '../../lib/auth'
 import { PageHead } from '../../components/Layout'
 import { Card, useAction } from '../../components/ui'
 import { download } from '../../lib/util'
+import { DataTable } from '../../components/DataTable'
 
 const FIELDS = [
   'nama_murid', 'ic_murid', 'kelas',
@@ -45,6 +46,7 @@ interface Result { baru: number; dikemaskini: number; dilangkau: number; amaran:
 export default function Import() {
   const { refresh } = useAuth()
   const [rows, setRows] = useState<Record<string, string>[]>([])
+  const numbered = useMemo(() => rows.map((r, i) => ({ ...r, __i: String(i + 1) })), [rows])
   const [headers, setHeaders] = useState<string[]>([])
   const [map, setMap] = useState<Record<FieldKey, string> | null>(null)
   const [result, setResult] = useState<Result | null>(null)
@@ -106,16 +108,11 @@ export default function Import() {
             ))}
           </div>
           <h3 className="h3">Pratonton</h3>
-          <div className="scroll-x">
-            <table className="table">
-              <thead><tr>{FIELDS.filter((f) => map[f]).map((f) => <th key={f}>{f}</th>)}</tr></thead>
-              <tbody>
-                {rows.slice(0, 5).map((r, i) => (
-                  <tr key={i}>{FIELDS.filter((f) => map[f]).map((f) => <td key={f}>{r[map[f]]}</td>)}</tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <DataTable rows={numbered} rowKey={(r) => r.__i} pageSize={10} resetKey={rows}
+            cols={[
+              { key: '__i', label: '#', sort: (r) => Number(r.__i), className: 'muted small', render: (r) => r.__i },
+              ...FIELDS.filter((f) => map[f]).map((f) => ({ key: f, label: f, sort: (r: Record<string, string>) => r[map[f]], render: (r: Record<string, string>) => r[map[f]] })),
+            ]} />
           <button className="btn primary" disabled={busy || !rows.length} onClick={doImport}>
             {busy ? `Mengimport… ${progress}%` : `Import ${rows.length} murid`}
           </button>

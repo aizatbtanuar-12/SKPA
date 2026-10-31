@@ -5,6 +5,7 @@ import { PageHead } from '../../components/Layout'
 import { Badge, Card, Empty, Stat } from '../../components/ui'
 import { feeStatusLabel, feeStatusTone, maskIC, toCSV, download } from '../../lib/util'
 import type { FeeStatus } from '../Dashboard'
+import { DataTable } from '../../components/DataTable'
 
 interface Row {
   id: number; full_name: string; ic_no: string | null; family_id: number; class_id: number
@@ -76,35 +77,22 @@ export default function MyClass() {
         <Stat label="Belum bayar" value={summary.belum} tone={summary.belum ? 'red' : undefined} />
       </div>
       <Card>
-        {rows.length ? (
-          <table className="table">
-            <thead><tr><th>#</th><th>Nama murid</th><th>Ibu bapa / penjaga</th><th>Keluarga</th><th>Yuran</th></tr></thead>
-            <tbody>
-              {rows.map((r, i) => {
-                const f = fees[r.family_id]
-                return (
-                  <tr key={r.id}>
-                    <td>{i + 1}</td>
-                    <td><strong>{r.full_name}</strong><div className="muted small">{maskIC(r.ic_no)}</div></td>
-                    <td>
-                      {r.student_guardians.map((g, k) => (
-                        <div key={k} className="small">
-                          {g.guardians?.full_name} {g.guardians?.phone && <span className="muted">· {g.guardians.phone}</span>}
-                          {g.guardians?.user_id && <span title="Ada akaun portal"> ✓</span>}
-                        </div>
-                      ))}
-                    </td>
-                    <td>
-                      <span className="mono">{f?.family_code}</span>
-                      {f && f.active_children > 1 && <div className="muted small">{f.active_children} beradik</div>}
-                    </td>
-                    <td>{f && <Badge tone={feeStatusTone[f.status]}>{feeStatusLabel[f.status]}</Badge>}</td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-        ) : <Empty>Tiada murid dalam kelas ini lagi.</Empty>}
+        <DataTable rows={rows} rowKey={(r) => r.id} pageSize={20} empty="Tiada murid dalam kelas ini lagi."
+          cols={[
+            { key: 'no', label: '#', sort: (r) => rows.indexOf(r), className: 'muted', render: (r) => rows.indexOf(r) + 1 },
+            { key: 'nama', label: 'Nama murid', sort: (r) => r.full_name, render: (r) => <><strong>{r.full_name}</strong><div className="muted small">{maskIC(r.ic_no)}</div></> },
+            { key: 'penjaga', label: 'Ibu bapa / penjaga', sort: (r) => r.student_guardians[0]?.guardians?.full_name, render: (r) => r.student_guardians.map((g, k) => (
+              <div key={k} className="small">
+                {g.guardians?.full_name} {g.guardians?.phone && <span className="muted">· {g.guardians.phone}</span>}
+                {g.guardians?.user_id && <span title="Ada akaun portal"> ✓</span>}
+              </div>
+            )) },
+            { key: 'kod', label: 'Keluarga', sort: (r) => fees[r.family_id]?.family_code, render: (r) => { const f = fees[r.family_id]; return <>
+              <span className="mono">{f?.family_code}</span>
+              {f && f.active_children > 1 && <div className="muted small">{f.active_children} beradik</div>}
+            </> } },
+            { key: 'yuran', label: 'Yuran', sort: (r) => (fees[r.family_id] ? feeStatusLabel[fees[r.family_id].status] : null), render: (r) => { const f = fees[r.family_id]; return f && <Badge tone={feeStatusTone[f.status]}>{feeStatusLabel[f.status]}</Badge> } },
+          ]} />
       </Card>
     </>
   )

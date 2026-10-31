@@ -6,7 +6,7 @@ import { feeStatusLabel, rm, roleLabel } from '../lib/util'
 import { useFamily } from '../lib/useFamily'
 import CampaignCard from '../components/CampaignCard'
 import { DanaCard, MemoTile, MEMO_SELECT, type MemoLite } from '../components/HomeParts'
-import { Live, PBadge, QuickTiles, type QuickTile, firstName, initials, todayLong, useIsMobile } from '../components/pui'
+import { Live, PBadge, QuickTiles, shortRM, type QuickTile, firstName, initials, todayLong, useIsMobile } from '../components/pui'
 import { loadProgress, type Campaign, type Progress } from '../lib/donations'
 
 export interface FundSummary {
@@ -66,29 +66,61 @@ export default function Dashboard() {
   const name = firstName(profile?.full_name)
   const role = roleLabel[r.role]
 
-  const todos: Todo[] = [
-    ...(r.isStaff ? [
-      { to: '/semakan-bayaran', label: 'Bukti yuran untuk disemak', n: counts.payments, hint: 'Sahkan dan keluarkan resit' },
-      { to: '/kempen', label: 'Sumbangan untuk disemak', n: counts.donations, hint: 'Kutipan dana yang sedang berjalan' },
-    ] : []),
-    ...(r.canVerify ? [{ to: '/pengesahan', label: 'Pengesahan murid', n: counts.claims, hint: 'Anak yang didaftarkan ibu bapa' }] : []),
-    ...(r.isStaff ? [{ to: '/kutipan', label: 'Keluarga belum lunas', n: counts.unpaid, hint: `Yuran ${settings?.current_year ?? ''}` }] : []),
+  // Hero option 1a (design handoff "Admin Hero"): collection panel + task tiles
+  const tasks: Todo[] = [
+    ...(r.isStaff ? [{ to: '/semakan-bayaran', label: 'Bukti yuran', n: counts.payments, hint: 'Sahkan & keluarkan resit' }] : []),
+    ...(r.isStaff ? [{ to: '/kempen', label: 'Sumbangan', n: counts.donations, hint: 'Kutipan dana berjalan' }] : []),
+    ...(r.canVerify ? [{ to: '/pengesahan', label: 'Pengesahan murid', n: counts.claims, hint: 'Didaftarkan ibu bapa' }] : []),
   ]
-  const outstanding = todos.filter((t) => t.n > 0 && t.to !== '/kutipan').reduce((a, t) => a + t.n, 0)
+  const outstanding = tasks.reduce((a, t) => a + t.n, 0)
+  const headline = !loaded ? 'Memuatkan…' : outstanding ? `${outstanding} perkara menunggu tindakan anda hari ini.` : 'Tiada perkara tertunggak. Syabas!'
+  const famTotal = Number(fund?.families_total ?? 0)
+  const famPaid = Number(fund?.families_paid ?? 0)
+  const paidPct = famTotal ? Math.round((famPaid / famTotal) * 100) : 0
 
-  const todoCard = (
-    <div className="feecard todo-card">
-      <div className="feecard-top"><span>Perlu tindakan</span><span className="pbadge gold">{role}</span></div>
-      <Live as="div" className="big-amount">{loaded ? outstanding : '…'}</Live>
-      <Live as="div" className="caption">{!loaded ? 'Memuatkan…' : outstanding ? 'perkara menunggu tindakan anda' : 'Tiada perkara tertunggak. Syabas!'}</Live>
-      <div className="todo-list">
-        {todos.length ? todos.map((t) => (
-          <Link key={t.to} to={t.to} className="todo-row">
-            <div><b>{t.label}</b><span>{t.hint}</span></div>
-            <Live className={`todo-n ${t.n && t.to !== '/kutipan' ? 'hot' : ''}`}>{t.n}</Live>
-          </Link>
-        )) : <div className="pinfo blue">Anda boleh membaca memo, melihat dana dan menyertai mesyuarat agung.</div>}
+  const collection = (
+    <div className="ah-collect">
+      <div className="ah-ring" style={{ background: `conic-gradient(var(--accent) ${paidPct * 3.6}deg, rgba(255,255,255,.14) 0)` }} role="img" aria-label={`${paidPct} peratus keluarga lunas`}>
+        <span translate="no">{`${paidPct}%`}</span>
       </div>
+      <div style={{ minWidth: 0 }}>
+        <Live as="div" className="ah-eyebrow">{`KUTIPAN YURAN ${fund?.year ?? settings?.current_year ?? ''}`}</Live>
+        <Live as="div" className="ah-amount">{shortRM(fund?.yuran_collected ?? 0)}</Live>
+        <Live as="div" className="ah-sub">{fund ? `${famPaid} / ${famTotal} keluarga lunas · ${Math.max(0, famTotal - famPaid)} belum` : '…'}</Live>
+      </div>
+    </div>
+  )
+
+  const taskTiles = tasks.length > 0 && (
+    <div className="ah-tasks" style={{ ['--n' as string]: tasks.length }}>
+      {tasks.map((t) => (
+        <Link key={t.to} to={t.to} className={`ah-task ${t.n ? 'hot' : 'clear'}`}>
+          <Live className="num">{t.n ? t.n : '✓'}</Live>
+          <div className="txt"><b>{t.label}</b><span>{t.hint}</span></div>
+          {t.n ? <span className="arrow" aria-hidden="true">→</span> : null}
+        </Link>
+      ))}
+    </div>
+  )
+
+  const hero = (
+    <div className={`ahero ${mobile ? 'mob' : ''}`}>
+      <div className="ah-deco" />
+      {mobile && (
+        <div className="hero-top">
+          <div className="hero-brand"><img src="/logo.png" alt="Logo PIBG SK Puncak Alam" /><div><strong>Portal PIBG</strong><span>{settings?.school_name ?? 'SK Puncak Alam'}</span></div></div>
+          <button className="avatar" onClick={() => nav('/profil')} aria-label="Profil saya">{initials(profile?.full_name)}</button>
+        </div>
+      )}
+      <div className="ah-top">
+        <div>
+          <div className="ah-date">{todayLong()} · {role}</div>
+          <div className="ah-hi">Hai, {name}!</div>
+          <Live as="div" className="ah-head">{headline}</Live>
+        </div>
+        {collection}
+      </div>
+      {taskTiles}
     </div>
   )
 
@@ -151,17 +183,7 @@ export default function Dashboard() {
   if (mobile) {
     return (
       <div className="up">
-        <div className="hero">
-          <div className="deco-ring" style={{ right: -60, top: -40, width: 220, height: 220 }} />
-          <div className="deco-disc" style={{ right: 60, top: 120, width: 90, height: 90 }} />
-          <div className="hero-top">
-            <div className="hero-brand"><img src="/logo.png" alt="Logo PIBG SK Puncak Alam" /><div><strong>Portal PIBG</strong><span>{settings?.school_name ?? 'SK Puncak Alam'}</span></div></div>
-            <button className="avatar" onClick={() => nav('/profil')} aria-label="Profil saya">{initials(profile?.full_name)}</button>
-          </div>
-          <div className="hero-date">{todayLong()}</div>
-          <div className="hero-hi">Hai, {name}!</div>
-        </div>
-        {todoCard}
+        {hero}
         <QuickTiles tiles={tiles} mobile />
         {familyCard && <div className="home-sec">{familyCard}</div>}
         {memos.length > 0 && (
@@ -178,20 +200,7 @@ export default function Dashboard() {
 
   return (
     <>
-      <div className="dhero">
-        <div className="deco-ring" style={{ right: -80, top: -120, width: 320, height: 320, borderWidth: 40 }} />
-        <div className="deco-disc" style={{ left: '38%', bottom: -60, width: 160, height: 160 }} />
-        <div>
-          <div className="date">{todayLong()}</div>
-          <div className="hi">Hai, {name}!</div>
-          <p>Ringkasan terkini PIBG {settings?.school_name ?? 'SK Puncak Alam'}.</p>
-          <div className="pills">
-            <span>{role}</span>
-            {r.myClasses.length > 0 && <span translate="no">Kelas {r.myClasses.map((c) => c.name).join(', ')}</span>}
-          </div>
-        </div>
-        {todoCard}
-      </div>
+      {hero}
       <QuickTiles tiles={tiles} mobile={false} />
       {familyCard && <div style={{ marginBottom: 20 }}>{familyCard}</div>}
       <div className="pgrid eq">

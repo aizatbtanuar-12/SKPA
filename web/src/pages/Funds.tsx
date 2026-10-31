@@ -5,6 +5,7 @@ import { PageHead } from '../components/Layout'
 import { Badge, Card, Empty, Field, Modal, Stat, useAction } from '../components/ui'
 import { date, rm, type Tone } from '../lib/util'
 import type { FundSummary } from './Dashboard'
+import { DataTable } from '../components/DataTable'
 
 interface Program {
   id: number; title: string; description: string | null; start_date: string | null; end_date: string | null
@@ -117,23 +118,16 @@ export default function Funds() {
       </div>
 
       <Card title={`Transaksi ${year}`}>
-        {txns.length ? (
-          <table className="table">
-            <thead><tr><th>Tarikh</th><th>Kategori</th><th>Butiran</th><th>Program</th><th className="num">Masuk</th><th className="num">Keluar</th></tr></thead>
-            <tbody>
-              {txns.map((t) => (
-                <tr key={t.id}>
-                  <td>{date(t.txn_date)}</td>
-                  <td>{t.category}</td>
-                  <td>{t.description}</td>
-                  <td className="small">{progs.find((p) => p.id === t.program_id)?.title ?? ''}</td>
-                  <td className="num">{t.kind === 'masuk' ? rm(t.amount) : ''}</td>
-                  <td className="num">{t.kind === 'keluar' ? rm(t.amount) : ''}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : <Empty>Tiada transaksi selain kutipan yuran.</Empty>}
+        <DataTable rows={txns} rowKey={(t) => t.id} pageSize={10} initialSort={{ key: 'tarikh', dir: 'desc' }} resetKey={year}
+          empty="Tiada transaksi selain kutipan yuran."
+          cols={[
+            { key: 'tarikh', label: 'Tarikh', sort: (t) => t.txn_date, render: (t) => date(t.txn_date) },
+            { key: 'kat', label: 'Kategori', sort: (t) => t.category, render: (t) => t.category },
+            { key: 'butiran', label: 'Butiran', sort: (t) => t.description, render: (t) => t.description },
+            { key: 'prog', label: 'Program', sort: (t) => progs.find((p) => p.id === t.program_id)?.title, className: 'small', render: (t) => progs.find((p) => p.id === t.program_id)?.title ?? '' },
+            { key: 'masuk', label: 'Masuk', num: true, sort: (t) => (t.kind === 'masuk' ? Number(t.amount) : null), render: (t) => (t.kind === 'masuk' ? rm(t.amount) : '') },
+            { key: 'keluar', label: 'Keluar', num: true, sort: (t) => (t.kind === 'keluar' ? Number(t.amount) : null), render: (t) => (t.kind === 'keluar' ? rm(t.amount) : '') },
+          ]} />
         <p className="muted small">Kutipan yuran PIBG dikira secara automatik daripada bayaran yang diluluskan.</p>
       </Card>
 

@@ -508,3 +508,63 @@ button.ptab { background: none; border: 0; font: inherit; font-size: 11px; font-
 .family-row b { font-size: 15px; }
 .family-row .chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
 .family-row .pbtn.small { width: auto; }
+
+/* =====================================================================
+   Staff Laman Utama hero — design handoff "Admin Hero", option 1a
+   ===================================================================== */
+.ahero { background: var(--brand-dark); color: #fff; border-radius: 32px; padding: 32px 36px; position: relative; overflow: hidden; margin-bottom: 22px; container-type: inline-size; }
+.ahero > * { position: relative; }
+.ah-deco { position: absolute !important; right: -90px; top: -110px; width: 320px; height: 320px; border-radius: 50%; border: 40px solid var(--accent); opacity: .14; pointer-events: none; }
+.ah-top { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 32px; align-items: center; }
+.ah-date { font-size: 14px; font-weight: 600; opacity: .7; }
+.ah-hi { font-size: 42px; font-weight: 800; letter-spacing: -.03em; line-height: 1.1; margin-top: 4px; }
+.ah-head { font-size: 17px; opacity: .85; margin-top: 8px; }
+.ah-collect { display: flex; align-items: center; gap: 18px; background: rgba(255,255,255,.08); border-radius: 24px; padding: 16px 22px; }
+.ah-ring { width: 92px; height: 92px; border-radius: 50%; display: grid; place-items: center; flex-shrink: 0; }
+.ah-ring > span { width: 70px; height: 70px; border-radius: 50%; background: var(--brand-dark); display: grid; place-items: center; font-weight: 800; font-size: 20px; white-space: nowrap; }
+.ah-eyebrow { font-size: 12px; font-weight: 700; letter-spacing: .06em; opacity: .7; }
+.ah-amount { font-size: 26px; font-weight: 800; }
+.ah-sub { font-size: 13px; opacity: .75; }
+.ah-tasks { display: grid; grid-template-columns: repeat(var(--n, 3), minmax(0, 1fr)); gap: 12px; margin-top: 26px; }
+.ah-task { border-radius: 20px; padding: 16px 18px; display: flex; align-items: center; gap: 14px; text-decoration: none; transition: transform .15s; }
+.ah-task:hover { transform: translateY(-2px); }
+.ah-task.hot { background: var(--accent); color: var(--brand-dark); }
+.ah-task.clear { background: rgba(255,255,255,.08); color: #cfe9da; }
+.ah-task .num { font-size: 34px; font-weight: 800; letter-spacing: -.02em; min-width: 44px; }
+.ah-task .txt { flex: 1; min-width: 0; }
+.ah-task .txt b { display: block; font-size: 15px; font-weight: 800; }
+.ah-task .txt span { font-size: 12px; opacity: .75; }
+.ah-task .arrow { font-size: 18px; font-weight: 800; }
+@container (max-width: 900px) {
+  .ah-top { grid-template-columns: 1fr; gap: 20px; }
+  .ah-tasks { grid-template-columns: 1fr; }
+}
+/* phones: full-bleed band under the status bar, brand row on top */
+.ahero.mob { border-radius: 0 0 32px 32px; padding: calc(env(safe-area-inset-top) + 12px) 20px 24px; margin-bottom: 0; }
+.ahero.mob .ah-top { margin-top: 22px; }
+.ahero.mob .ah-hi { font-size: 30px; }
+.ahero.mob .ah-head { font-size: 15px; }
+.ahero.mob .ah-collect { padding: 14px 16px; }
+.ahero.mob .ah-ring { width: 76px; height: 76px; } .ahero.mob .ah-ring > span { width: 58px; height: 58px; font-size: 17px; }
+.ahero.mob .ah-amount { font-size: 22px; }
+.ahero.mob .ah-tasks { margin-top: 16px; gap: 8px; }
+.ahero.mob .ah-task { padding: 12px 14px; }
+.ahero.mob .ah-task .num { font-size: 28px; }
+
+/* =====================================================================
+   DataTable: sortable headers + pagination (all tables, all roles)
+   ===================================================================== */
+.dt-scroll { overflow-x: auto; margin: 0 -4px; padding: 0 4px; }
+.th-sort { all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; font: inherit; letter-spacing: inherit; text-transform: inherit; color: inherit; white-space: nowrap; }
+.th-sort .arr { font-size: 10px; opacity: .35; }
+.th-sort:hover { color: var(--ink); } .th-sort:hover .arr { opacity: .7; }
+.th-sort.on { color: var(--brand); } .th-sort.on .arr { opacity: 1; }
+.th-sort:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+th.num .th-sort { flex-direction: row-reverse; }
+.dt-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 12px; }
+.dt-count { font-size: 13px; color: var(--muted); font-weight: 600; }
+.dt-pager { display: flex; align-items: center; gap: 10px; }
+.dt-pager .txt { height: 36px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--input-line); background: #fff; font: inherit; font-size: 13px; font-weight: 700; color: var(--ink); cursor: pointer; white-space: nowrap; }
+.dt-pager .txt:disabled { opacity: .35; cursor: default; }
+.dt-pager .label { font-size: 13px; font-weight: 700; color: var(--muted); white-space: nowrap; }
+@media (max-width: 759px) { .dt-pager .txt { padding: 0 10px; } .dt-foot { justify-content: center; } .dt-count { width: 100%; text-align: center; } }
