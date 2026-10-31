@@ -9,6 +9,7 @@ interface AuthState {
   classes: ClassRow[]
   familyId: number | null
   loading: boolean
+  error: string | null
   refresh: () => Promise<void>
   signOut: () => Promise<void>
 }
@@ -22,33 +23,51 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [classes, setClasses] = useState<ClassRow[]>([])
   const [familyId, setFamilyId] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   const load = useCallback(async (s: Session | null) => {
+    setError(null)
     if (!s) {
       setProfile(null); setSettings(null); setClasses([]); setFamilyId(null); setLoading(false)
       return
     }
-    const [p, st, cl, fam] = await Promise.all([
-      supabase.from('profiles').select('*').eq('id', s.user.id).single(),
-      supabase.from('school_settings').select('*').eq('id', 1).single(),
-      supabase.from('classes').select('*').eq('active', true).order('year_level').order('name'),
-      supabase.rpc('my_family_id'),
-    ])
-    setProfile((p.data as Profile) ?? null)
-    setSettings((st.data as Settings) ?? null)
-    setClasses((cl.data as ClassRow[]) ?? [])
-    setFamilyId((fam.data as number | null) ?? null)
-    setLoading(false)
+    try {
+      let p = await supabase.from('profiles').select('*').eq('id', s.user.id).maybeSingle()
+      if (!p.error && !p.data) {
+        // account created before the database was set up: create its profile now
+        await supabase.rpc('ensure_my_profile')
+        p = await supabase.from('profiles').select('*').eq('id', s.user.id).maybeSingle()
+      }
+      const [st, cl, fam] = await Promise.all([
+        supabase.from('school_settings').select('*').eq('id', 1).maybeSingle(),
+        supabase.from('classes').select('*').eq('active', true).order('year_level').order('name'),
+        supabase.rpc('my_family_id'),
+      ])
+      const firstErr = p.error ?? st.error ?? cl.error
+      if (firstErr) throw new Error(firstErr.message)
+      if (!p.data) throw new Error('Profil pengguna tidak dijumpai. Jalankan supabase/migrations/003_profile_repair.sql dalam Supabase SQL Editor.')
+      setProfile(p.data as Profile)
+      setSettings((st.data as Settings) ?? null)
+      setClasses((cl.data as ClassRow[]) ?? [])
+      setFamilyId((fam.data as number | null) ?? null)
+    } catch (e) {
+      setProfile(null)
+      setError(e instanceof Error ? e.message : String(e))
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => { setSession(data.session); load(data.session) })
+    supabase.auth.getSession()
+      .then(({ data }) => { setSession(data.session); load(data.session) })
+      .catch((e) => { setError(String(e)); setLoading(false) })
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => { setSession(s); load(s) })
     return () => sub.subscription.unsubscribe()
   }, [load])
 
   const value: AuthState = {
-    session, profile, settings, classes, familyId, loading,
+    session, profile, settings, classes, familyId, loading, error,
     refresh: () => load(session),
     signOut: async () => { await supabase.auth.signOut() },
   }

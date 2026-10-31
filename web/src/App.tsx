@@ -27,11 +27,26 @@ function Guard({ ok, children }: { ok: boolean; children: ReactNode }) {
 }
 
 function Routed() {
-  const { session, loading, profile } = useAuth()
+  const { session, loading, profile, error, refresh, signOut } = useAuth()
   const r = useRole()
   if (loading) return <div className="center"><Spinner /></div>
   if (!session) return <Login />
-  if (!profile) return <div className="center"><Spinner /></div>
+  if (!profile) {
+    return (
+      <div className="center">
+        <div className="card narrow">
+          <h2>Tidak dapat memuatkan akaun anda</h2>
+          <p>Sistem tidak dapat membaca profil anda daripada pangkalan data. Ini biasanya berlaku jika
+            fail SQL dalam <code>supabase/migrations</code> belum dijalankan sepenuhnya.</p>
+          {error && <div className="alert err small">{error}</div>}
+          <div className="row gap">
+            <button className="btn primary" onClick={refresh}>Cuba lagi</button>
+            <button className="btn ghost" onClick={signOut}>Log keluar</button>
+          </div>
+        </div>
+      </div>
+    )
+  }
   return (
     <Layout>
       <Routes>
