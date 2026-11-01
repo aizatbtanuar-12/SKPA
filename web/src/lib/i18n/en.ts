@@ -55,6 +55,7 @@ const en: Record<string, string> = {
   'belum dijalankan sepenuhnya.': 'have not all been run.',
   'Cuba lagi': 'Try again',
   'Log keluar': 'Sign out',
+  'Log keluar daripada Portal PIBG?': 'Sign out of the PTA Portal?',
   'Belum dikonfigurasi': 'Not configured yet',
   'Tetapkan': 'Set',
   'dan': 'and',
