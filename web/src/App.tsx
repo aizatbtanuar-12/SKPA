@@ -41,8 +41,17 @@ function Routed() {
   const { session, loading, profile, error, refresh, signOut } = useAuth()
   const r = useRole()
   const lang = useLang() // re-render pages (dates, numbers) when the language changes
-  if (loading) return <div className="center"><Spinner /></div>
+  const splash = (
+    <div className="center splash" aria-busy="true">
+      <img className="logo big" src="/logo.png" alt="Logo PIBG SK Puncak Alam" />
+      <Spinner />
+    </div>
+  )
+  if (loading) return splash
   if (!session) return <Login />
+  // right after signing in the session arrives a moment before the profile has loaded:
+  // keep showing the loading screen, and only show the error page when loading really failed
+  if (!profile && !error) return splash
   if (!profile) {
     return (
       <div className="center">
