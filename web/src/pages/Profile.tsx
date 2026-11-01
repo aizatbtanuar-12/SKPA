@@ -29,8 +29,7 @@ export default function Profile() {
 
   return (
     <>
-      <PageHead title="Profil Saya" sub={`${session?.user.email} · ${roleLabel[profile?.role ?? 'parent']}`}
-        actions={<button type="button" className="btn small danger" onClick={() => { if (window.confirm('Log keluar daripada Portal PIBG?')) signOut() }}>Log keluar</button>} />
+      <PageHead title="Profil Saya" sub={`${session?.user.email} · ${roleLabel[profile?.role ?? 'parent']}`} />
       <div className="grid2">
         <Card title="Maklumat peribadi">
           <form className="form" onSubmit={save}>
