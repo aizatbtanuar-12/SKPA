@@ -737,6 +737,12 @@ const en: Record<string, string> = {
   // ---------- profile ----------
   'No. Kad Pengenalan wajib diisi (12 digit).': 'IC number is required (12 digits).',
   'Profil dikemas kini.': 'Profile updated.',
+  'Telah disahkan. Hubungi pentadbir untuk pindaan.': 'Verified. Contact the administrator to change it.',
+  'No. KP ini sudah digunakan oleh ibu bapa / penjaga lain.': 'This IC number is already used by another parent / guardian.',
+  'Ubah No. KP': 'Change IC number',
+  'No. KP baru': 'New IC number',
+  'No. KP dikemas kini.': 'IC number updated.',
+  'Hanya pentadbir boleh menukar No. KP ibu bapa yang telah disahkan. Rekod keluarga dikemas kini sekali.': 'Only the administrator can change a verified parent’s IC number. Their family record is updated at the same time.',
   'Kata laluan ditukar.': 'Password changed.',
   'Profil Saya': 'My Profile',
   'Maklumat peribadi': 'Personal details',

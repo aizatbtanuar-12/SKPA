@@ -2,9 +2,9 @@ import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react
 import { supabase, check, type Profile, type Role, type ClassRow } from '../../lib/supabase'
 import { useAuth } from '../../lib/auth'
 import { PageHead } from '../../components/Layout'
-import { Card, Modal, useAction } from '../../components/ui'
+import { Card, Field, Modal, useAction } from '../../components/ui'
 import { DataTable } from '../../components/DataTable'
-import { LEVELS, date, levelLabel, maskIC, roleLabel } from '../../lib/util'
+import { LEVELS, date, levelLabel, maskIC, normIC, roleLabel, validIC } from '../../lib/util'
 
 type P = Profile & { created_at: string }
 const CLASS_PAGE = 10
@@ -196,6 +196,7 @@ function CopyModal({ source, classes, onClose, onDone }:
 function UsersCard({ users, reload }: { users: P[]; reload: () => Promise<void> }) {
   const [q, setQ] = useState('')
   const [roleF, setRoleF] = useState<'' | Role>('')
+  const [icEdit, setIcEdit] = useState<{ u: P; ic: string } | null>(null)
   const { busy, run } = useAction()
 
   const filtered = users.filter((u) => (!roleF || u.role === roleF) &&
@@ -204,6 +205,11 @@ function UsersCard({ users, reload }: { users: P[]; reload: () => Promise<void> 
   const setRole = (u: P, role: Role) => run(async () => {
     check(await supabase.from('profiles').update({ role }).eq('id', u.id)); await reload()
   }, `${u.full_name} kini ${roleLabel[role]}.`)
+  const saveIC = (e: FormEvent) => { e.preventDefault(); if (!icEdit) return; run(async () => {
+    if (!validIC(icEdit.ic)) throw new Error('No. Kad Pengenalan mesti 12 digit.')
+    check(await supabase.from('profiles').update({ ic_no: normIC(icEdit.ic) }).eq('id', icEdit.u.id))
+    setIcEdit(null); await reload()
+  }, 'No. KP dikemas kini.') }
   const setPanitia = (u: P, panitia: string) => run(async () => {
     check(await supabase.from('profiles').update({ panitia: panitia || null }).eq('id', u.id)); await reload()
   })
@@ -221,7 +227,7 @@ function UsersCard({ users, reload }: { users: P[]; reload: () => Promise<void> 
         empty="Tiada pengguna."
         cols={[
           { key: 'nama', label: 'Nama', sort: (u) => u.full_name, render: (u) => u.full_name || '-' },
-          { key: 'ic', label: 'No. KP', sort: (u) => u.ic_no, className: 'mono small', render: (u) => maskIC(u.ic_no) },
+          { key: 'ic', label: 'No. KP', sort: (u) => u.ic_no, className: 'mono small', render: (u) => <span className="ic-cell">{maskIC(u.ic_no)}<button type="button" className="link small" onClick={() => setIcEdit({ u, ic: u.ic_no ?? '' })}>Ubah</button></span> },
           { key: 'tel', label: 'Telefon', sort: (u) => u.phone, render: (u) => u.phone || '-' },
           { key: 'daftar', label: 'Tarikh daftar', sort: (u) => u.created_at, className: 'small', render: (u) => date(u.created_at) },
           { key: 'peranan', label: 'Peranan', sort: (u) => roleLabel[u.role], render: (u) => (
@@ -233,6 +239,16 @@ function UsersCard({ users, reload }: { users: P[]; reload: () => Promise<void> 
             <input defaultValue={u.panitia ?? ''} placeholder="cth: Sains" onBlur={(e) => e.target.value !== (u.panitia ?? '') && setPanitia(u, e.target.value)} />
           ) },
         ]} />
+      {icEdit && (
+        <Modal title="Ubah No. KP" onClose={() => setIcEdit(null)}>
+          <form className="form" onSubmit={saveIC}>
+            <p className="muted small" style={{ marginTop: 0 }}>Hanya pentadbir boleh menukar No. KP ibu bapa yang telah disahkan. Rekod keluarga dikemas kini sekali.</p>
+            <p style={{ margin: '0 0 12px' }}><b translate="no">{icEdit.u.full_name}</b></p>
+            <Field label="No. KP baru"><input required autoFocus inputMode="numeric" value={icEdit.ic} onChange={(e) => setIcEdit({ ...icEdit, ic: e.target.value })} /></Field>
+            <button className="btn primary" disabled={busy}>Simpan</button>
+          </form>
+        </Modal>
+      )}
     </Card>
   )
 }

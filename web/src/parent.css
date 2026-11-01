@@ -604,3 +604,5 @@ th.num .th-sort { flex-direction: row-reverse; }
 .signout-row { display: flex; justify-content: center; margin: 8px 0 24px; }
 .signout-row .btn { min-width: 200px; }
 @media (max-width: 759px) { .signout-row .btn { width: 100%; min-height: 48px; } }
+.pshell input.locked { background: var(--track); color: var(--muted); cursor: not-allowed; }
+.ic-cell { display: inline-flex; gap: 10px; align-items: center; white-space: nowrap; }
