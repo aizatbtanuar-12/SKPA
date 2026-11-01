@@ -610,3 +610,5 @@ th.num .th-sort { flex-direction: row-reverse; }
 .dt-size { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--muted); }
 .pshell .dt-size select { height: 34px !important; width: auto; padding: 0 28px 0 10px; border-radius: 10px; font-size: 13px; }
 @media (max-width: 759px) { .dt-left { width: 100%; justify-content: center; } }
+.splash { flex-direction: column; gap: 4px; background: var(--bg, #f6f3ea); }
+.splash .logo.big { width: 96px; height: 96px; margin-bottom: 0; }
