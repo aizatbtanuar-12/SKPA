@@ -8,7 +8,7 @@ import { Card, Field, useAction } from '../components/ui'
 import { normIC, roleLabel, validIC } from '../lib/util'
 
 export default function Profile() {
-  const { profile, session, refresh } = useAuth()
+  const { profile, session, refresh, signOut } = useAuth()
   const [f, setF] = useState({ full_name: profile?.full_name ?? '', phone: profile?.phone ?? '', ic_no: profile?.ic_no ?? '' })
   const [pw, setPw] = useState('')
   const { hasFamily } = useRole()
@@ -29,7 +29,8 @@ export default function Profile() {
 
   return (
     <>
-      <PageHead title="Profil Saya" sub={`${session?.user.email} · ${roleLabel[profile?.role ?? 'parent']}`} />
+      <PageHead title="Profil Saya" sub={`${session?.user.email} · ${roleLabel[profile?.role ?? 'parent']}`}
+        actions={<button type="button" className="btn small danger" onClick={() => { if (window.confirm('Log keluar daripada Portal PIBG?')) signOut() }}>Log keluar</button>} />
       <div className="grid2">
         <Card title="Maklumat peribadi">
           <form className="form" onSubmit={save}>
@@ -54,6 +55,9 @@ export default function Profile() {
           <LangSwitch />
         </Card>
         {hasFamily && <SpouseCard />}
+      </div>
+      <div className="signout-row">
+        <button type="button" className="btn danger" onClick={() => { if (window.confirm('Log keluar daripada Portal PIBG?')) signOut() }}>Log keluar</button>
       </div>
     </>
   )

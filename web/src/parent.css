@@ -601,3 +601,6 @@ th.num .th-sort { flex-direction: row-reverse; }
 
 /* fields side by side: inputs line up even when one label wraps onto two lines */
 .row:has(> .field):not(:has(> .field small)) { align-items: flex-end; }
+.signout-row { display: flex; justify-content: center; margin: 8px 0 24px; }
+.signout-row .btn { min-width: 200px; }
+@media (max-width: 759px) { .signout-row .btn { width: 100%; min-height: 48px; } }
