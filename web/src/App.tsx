@@ -32,6 +32,7 @@ import ParentHome from './pages/parent/Home'
 import ParentMemos from './pages/parent/ParentMemos'
 import ParentFunds from './pages/parent/ParentFunds'
 import ParentAgm from './pages/parent/ParentAgm'
+import Privacy from './pages/Privacy'
 
 function Guard({ ok, children }: { ok: boolean; children: ReactNode }) {
   return ok ? <>{children}</> : <Navigate to="/" replace />
@@ -48,7 +49,12 @@ function Routed() {
     </div>
   )
   if (loading) return splash
-  if (!session) return <Login />
+  if (!session) return (
+    <Routes>
+      <Route path="/privasi" element={<Privacy standalone />} />
+      <Route path="*" element={<Login />} />
+    </Routes>
+  )
   // right after signing in the session arrives a moment before the profile has loaded:
   // keep showing the loading screen, and only show the error page when loading really failed
   if (!profile && !error) return splash
@@ -76,6 +82,7 @@ function Routed() {
         <Route path="/dana" element={r.isParent ? <ParentFunds /> : <Funds />} />
         <Route path="/agm" element={r.isParent ? <ParentAgm /> : <Agm />} />
         <Route path="/profil" element={<Profile />} />
+        <Route path="/privasi" element={<Privacy />} />
         <Route path="/resit/:id" element={<Receipt />} />
         <Route path="/sumbangan" element={<Donations />} />
         <Route path="/sumbangan/:id" element={<DonationCampaign />} />

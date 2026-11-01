@@ -5,7 +5,7 @@ import { PageHead } from '../../components/Layout'
 import { Card, Field, Modal, useAction } from '../../components/ui'
 import { DataTable } from '../../components/DataTable'
 import { Seg } from '../../components/pui'
-import { LEVELS, date, levelLabel, maskIC, normIC, roleLabel, validIC } from '../../lib/util'
+import { LEVELS, date, levelLabel, maskLast4, normIC, roleLabel, validIC } from '../../lib/util'
 
 type P = Profile & { created_at: string }
 const CLASS_PAGE = 10
@@ -17,7 +17,7 @@ export default function Users() {
 
   const load = useCallback(async () => {
     const [u, c] = await Promise.all([
-      supabase.from('profiles').select('*').order('created_at', { ascending: false }).limit(2000),
+      supabase.from('profiles').select('id,full_name,phone,role,panitia,created_at,ic_last4').order('created_at', { ascending: false }).limit(2000),
       supabase.from('classes').select('*').order('year_level').order('name'),
     ])
     setUsers((u.data as P[]) ?? [])
@@ -231,7 +231,7 @@ function UsersCard({ users, reload }: { users: P[]; reload: () => Promise<void> 
         empty="Tiada pengguna."
         cols={[
           { key: 'nama', label: 'Nama', sort: (u) => u.full_name, render: (u) => u.full_name || '-' },
-          { key: 'ic', label: 'No. KP', sort: (u) => u.ic_no, className: 'mono small', render: (u) => <span className="ic-cell">{maskIC(u.ic_no)}<button type="button" className="link small" onClick={() => setIcEdit({ u, ic: u.ic_no ?? '' })}>Ubah</button></span> },
+          { key: 'ic', label: 'No. KP', sort: (u) => u.ic_last4, className: 'mono small', render: (u) => <span className="ic-cell">{maskLast4(u.ic_last4)}<button type="button" className="link small" onClick={() => setIcEdit({ u, ic: '' })}>Ubah</button></span> },
           { key: 'tel', label: 'Telefon', sort: (u) => u.phone, render: (u) => u.phone || '-' },
           { key: 'daftar', label: 'Tarikh daftar', sort: (u) => u.created_at, className: 'small', render: (u) => date(u.created_at) },
           { key: 'peranan', label: 'Peranan', sort: (u) => roleLabel[u.role], render: (u) => (

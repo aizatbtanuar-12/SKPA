@@ -3,12 +3,12 @@ import { supabase } from '../../lib/supabase'
 import { useRole } from '../../lib/auth'
 import { PageHead } from '../../components/Layout'
 import { Badge, Card, Empty, Stat } from '../../components/ui'
-import { feeStatusLabel, feeStatusTone, maskIC, toCSV, download } from '../../lib/util'
+import { feeStatusLabel, feeStatusTone, maskLast4, toCSV, download } from '../../lib/util'
 import type { FeeStatus } from '../Dashboard'
 import { DataTable } from '../../components/DataTable'
 
 interface Row {
-  id: number; full_name: string; ic_no: string | null; family_id: number; class_id: number
+  id: number; full_name: string; ic_last4: string | null; family_id: number; class_id: number
   student_guardians: { relation: string; guardians: { full_name: string; phone: string | null; user_id: string | null } }[]
 }
 
@@ -21,7 +21,7 @@ export default function MyClass() {
   useEffect(() => {
     if (!classId) return
     supabase.from('students')
-      .select('id,full_name,ic_no,family_id,class_id,student_guardians(relation,guardians(full_name,phone,user_id))')
+      .select('id,full_name,ic_last4,family_id,class_id,student_guardians(relation,guardians(full_name,phone,user_id))')
       .eq('class_id', classId).eq('status', 'aktif').order('full_name')
       .then(async ({ data }) => {
         const list = (data as unknown as Row[]) ?? []
@@ -80,7 +80,7 @@ export default function MyClass() {
         <DataTable rows={rows} rowKey={(r) => r.id} pageSize={20} empty="Tiada murid dalam kelas ini lagi."
           cols={[
             { key: 'no', label: '#', sort: (r) => rows.indexOf(r), className: 'muted', render: (r) => rows.indexOf(r) + 1 },
-            { key: 'nama', label: 'Nama murid', sort: (r) => r.full_name, render: (r) => <><strong>{r.full_name}</strong><div className="muted small">{maskIC(r.ic_no)}</div></> },
+            { key: 'nama', label: 'Nama murid', sort: (r) => r.full_name, render: (r) => <><strong>{r.full_name}</strong><div className="muted small">{maskLast4(r.ic_last4)}</div></> },
             { key: 'penjaga', label: 'Ibu bapa / penjaga', sort: (r) => r.student_guardians[0]?.guardians?.full_name, render: (r) => r.student_guardians.map((g, k) => (
               <div key={k} className="small">
                 {g.guardians?.full_name} {g.guardians?.phone && <span className="muted">· {g.guardians.phone}</span>}

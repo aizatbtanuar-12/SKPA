@@ -27,6 +27,9 @@ export interface Profile {
   no_spouse?: boolean | null
   /** display language (migration 012) */
   lang?: 'ms' | 'en' | null
+  /** last 4 digits only; the full IC comes from my_ic() for your own account (migration 014) */
+  ic_last4?: string | null
+  spouse_ic_last4?: string | null
 }
 
 export interface Settings {

@@ -4,7 +4,7 @@ import { useAuth } from './auth'
 import type { FeeStatus } from '../pages/Dashboard'
 import type { Payment } from '../pages/parent/ParentFees'
 
-export interface Kid { id: number; full_name: string; ic_no: string | null; className: string; year: number | null }
+export interface Kid { id: number; full_name: string; ic_last4: string | null; className: string; year: number | null }
 
 /** The signed-in parent's family: fee status, children, payments. Same queries as before the redesign. */
 export function useFamily() {
@@ -18,13 +18,13 @@ export function useFamily() {
     if (!familyId) { setLoaded(true); return }
     const [s, k, p] = await Promise.all([
       supabase.from('family_fee_status').select('*').eq('family_id', familyId).maybeSingle(),
-      supabase.from('students').select('id,full_name,ic_no,classes(name,year_level)').eq('family_id', familyId).eq('status', 'aktif'),
+      supabase.from('students').select('id,full_name,ic_last4,classes(name,year_level)').eq('family_id', familyId).eq('status', 'aktif'),
       supabase.from('fee_payments').select('*').eq('family_id', familyId).order('submitted_at', { ascending: false }),
     ])
     setFee(s.data as FeeStatus | null)
-    type Row = { id: number; full_name: string; ic_no: string | null; classes: { name: string; year_level: number | null } | null }
+    type Row = { id: number; full_name: string; ic_last4: string | null; classes: { name: string; year_level: number | null } | null }
     setKids((((k.data as unknown) as Row[]) ?? [])
-      .map((r) => ({ id: r.id, full_name: r.full_name, ic_no: r.ic_no, className: r.classes?.name ?? '-', year: r.classes?.year_level ?? null }))
+      .map((r) => ({ id: r.id, full_name: r.full_name, ic_last4: r.ic_last4, className: r.classes?.name ?? '-', year: r.classes?.year_level ?? null }))
       .sort((a, b) => (a.year ?? 99) - (b.year ?? 99) || a.full_name.localeCompare(b.full_name)))
     setPays((p.data as Payment[]) ?? [])
     setLoaded(true)

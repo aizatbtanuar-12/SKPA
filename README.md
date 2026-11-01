@@ -46,6 +46,7 @@ You need a free [Supabase](https://supabase.com) account (database + login + fil
 11. Then `011_spouse_codes.sql` → **Run**. Links spouses' accounts and joins their family records, renumbers family codes without gaps (K00001, K00002, …), and stores the payment date read from the bank receipt.
 12. Then `012_language.sql` → **Run**. Lets each user choose Bahasa Melayu or English (Profil, the BM | EN switch in the menu, or on the sign-in page).
 13. Then `013_ic_lock.sql` → **Run**. Once a parent is verified, only the administrator can change their IC number (Pengguna & Kelas → No. KP → Ubah); their family record is updated with it.
+14. Then `014_privacy.sql` → **Run**. PDPA hardening: full IC numbers no longer leave the database (only the last 4 digits), each role reads only what its task needs, internal functions can't be called from the browser, and sensitive actions go to an audit log (Tetapan → Log audit). **Deploy the new website at the same time**: the old website version asks for IC columns that 014 hides. See `docs/SECURITY_PDPA.md`.
 
 ### 2. Configure sign-in e-mails (important)
 Supabase's built-in e-mail sender only delivers to your own Supabase team members, and only 2 e-mails per hour. Parents would never receive their confirmation e-mail. Pick one option:
@@ -104,13 +105,17 @@ These rules are enforced **inside the database** (Postgres Row Level Security), 
 
 ## Security & privacy notes (PDPA)
 
-- Parents must tick a consent notice when registering. The time of consent is stored.
-- A parent's account is only linked to a family after a class teacher verifies a child. If an IC is already linked to another account, the link is refused, which stops impersonation.
-- When a parent picks a receipt screenshot, the reference number and amount are read automatically **on the parent's own phone** (tesseract.js, served from this site, so the image is not sent to any outside service for reading). Parents confirm or correct the values. On **Semakan Bayaran**, the treasurer is warned if the same bank reference was used on another payment.
-- Payment proofs are stored privately. Only the uploader and AJK PIBG can open them.
-- AGM votes are secret. Everyone, including AJK, sees only the totals, and parents see them only after a motion is closed. Each family votes once, after checking in.
-- IC numbers are shown masked (`••••••-••-1234`) to teachers and on parent screens.
-- Admins can change roles. Keep the number of `admin` and `pibg` accounts small.
+The full review, test results and the settings to switch on in the Supabase dashboard are in **[docs/SECURITY_PDPA.md](docs/SECURITY_PDPA.md)**. In short:
+
+- Parents tick a consent notice when registering (time of consent is stored). The privacy notice is at `#/privasi` (linked from registration and Profil).
+- **Full IC / MyKid numbers never leave the database in bulk.** The API only gives the last 4 digits (`••••••-••-1234`). Your own IC comes from `my_ic()`; staff who manage records see one full IC at a time (`reveal_ic()`), and every reveal is logged.
+- Need-to-know access: teachers see their own class, AJK see only what their permissions (Tetapan → Akses pengguna) need, parents see only their own family. Enforced **inside the database** (Row Level Security + column privileges), so it holds even for someone calling the API from browser developer tools.
+- Audit log (Tetapan → Log audit, administrator only): role and access changes, IC changes and reveals, data downloads. It cannot be edited or deleted from the app.
+- Right of access: Profil → **Muat turun data saya** downloads everything held about the parent's family.
+- Payment proofs are stored privately; links to view them expire after 2 minutes. Receipt reading (OCR) runs on the parent's own device.
+- AGM votes are secret.
+- Security headers (CSP, no framing, HSTS…) are set in `web/vercel.json`; no source maps are published.
+- Run the security test suite after any database change: `node supabase/security/run.mjs` (see the doc).
 
 ## Free plan limits to know
 
@@ -161,6 +166,9 @@ supabase/tests/50_spouse_codes.sql          tests for 011
 supabase/migrations/012_language.sql        display language per user
 supabase/migrations/013_ic_lock.sql         verified IC numbers locked to the administrator
 supabase/tests/60_ic_lock.sql               tests for 013
+supabase/migrations/014_privacy.sql         PDPA: IC masking, need-to-know reads, function allowlist, audit log, data export
+supabase/security/run.mjs                   security test suite (API exposure per role, cross-family, functions, website files, headers)
+docs/SECURITY_PDPA.md                       security & PDPA review, findings, fixes, dashboard checklist
 web/src/lib/i18n/                           BM → English dictionary (en.ts) and the in-app translator
 web/scripts/receipt-date.test.mts           receipt date reader cases (npx tsx scripts/receipt-date.test.mts)
 supabase/tests/                      scenario tests (12 scenarios)

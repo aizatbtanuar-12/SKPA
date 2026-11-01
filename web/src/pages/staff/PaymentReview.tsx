@@ -71,7 +71,7 @@ function Review({ p, onClose, onDone }: { p: Row; onClose: () => void; onDone: (
 
   useEffect(() => {
     if (!p.proof_path) return
-    supabase.storage.from('bukti-bayaran').createSignedUrl(p.proof_path, 600).then(({ data }) => setUrl(data?.signedUrl ?? null))
+    supabase.storage.from('bukti-bayaran').createSignedUrl(p.proof_path, 120).then(({ data }) => setUrl(data?.signedUrl ?? null))
   }, [p.proof_path])
 
   const isPdf = p.proof_path?.toLowerCase().endsWith('.pdf')

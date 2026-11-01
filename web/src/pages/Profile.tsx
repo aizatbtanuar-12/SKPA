@@ -1,11 +1,12 @@
 import { useEffect, useState, type FormEvent } from 'react'
+import { Link } from 'react-router-dom'
 import { supabase, check } from '../lib/supabase'
 import { useAuth, useRole } from '../lib/auth'
 import SpouseCard from '../components/SpouseCard'
 import LangSwitch from '../components/LangSwitch'
 import { PageHead } from '../components/Layout'
 import { Card, Field, useAction } from '../components/ui'
-import { normIC, roleLabel, validIC } from '../lib/util'
+import { download, normIC, roleLabel, todayISO, validIC } from '../lib/util'
 
 export default function Profile() {
   const { profile, session, refresh, signOut } = useAuth()
@@ -25,6 +26,13 @@ export default function Profile() {
     check(await supabase.from('profiles').update({ full_name: f.full_name.trim(), phone: f.phone.trim(), ...(locked ? {} : { ic_no: normIC(f.ic_no) || null }) }).eq('id', profile!.id))
     await refresh()
   }, 'Profil dikemas kini.') }
+
+  // PDPA right of access: everything the portal holds about me and my family, as a JSON file
+  const exportData = () => run(async () => {
+    const { data, error } = await supabase.rpc('my_data_export')
+    if (error) throw new Error(error.message)
+    download(`data-saya-pibg-${todayISO()}.json`, JSON.stringify(data, null, 2), 'application/json')
+  }, 'Data anda telah dimuat turun.')
 
   const changePw = (e: FormEvent) => { e.preventDefault(); run(async () => {
     if (pw.length < 8) throw new Error('Kata laluan sekurang-kurangnya 8 aksara.')
@@ -61,6 +69,16 @@ export default function Profile() {
           <LangSwitch />
         </Card>
         {hasFamily && <SpouseCard />}
+      </div>
+      <div className="grid2">
+        <Card title="Data & privasi">
+          <p className="muted small" style={{ marginTop: 0 }}>Muat turun salinan semua maklumat yang disimpan oleh portal tentang anda dan keluarga anda.</p>
+          <div className="row gap wrap">
+            <button type="button" className="btn" onClick={exportData} disabled={busy}>Muat turun data saya</button>
+            <Link to="/privasi" className="btn ghost">Notis privasi</Link>
+          </div>
+          <p className="muted small">Untuk menarik balik persetujuan atau memadam akaun, hubungi pentadbir PIBG.</p>
+        </Card>
       </div>
       <div className="signout-row">
         <button type="button" className="btn danger" onClick={() => { if (window.confirm('Log keluar daripada Portal PIBG?')) signOut() }}>Log keluar</button>

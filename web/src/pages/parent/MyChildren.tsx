@@ -3,12 +3,12 @@ import { Link, useLocation } from 'react-router-dom'
 import { supabase, check } from '../../lib/supabase'
 import { useAuth } from '../../lib/auth'
 import { useAction } from '../../components/ui'
-import { claimLabel, date, maskIC, normIC, relationLabel, validIC } from '../../lib/util'
+import { claimLabel, date, maskLast4, normIC, relationLabel, validIC } from '../../lib/util'
 import SpouseCard from '../../components/SpouseCard'
 import { PageHead, PBadge, Seg, initials, useIsMobile, useScrollTop, type PTone } from '../../components/pui'
 
 interface Claim { id: number; child_name: string; class_id: number; relation: string; status: string; review_note: string | null; created_at: string }
-interface Child { id: number; full_name: string; ic_no: string | null; classes: { name: string } | null }
+interface Child { id: number; full_name: string; ic_last4: string | null; classes: { name: string } | null }
 interface Guardian { id: number; full_name: string; phone: string | null }
 type Tab = 'anak' | 'tambah' | 'permohonan'
 
@@ -30,11 +30,11 @@ export default function MyChildren() {
   useScrollTop(tab)
 
   const load = useCallback(async () => {
-    const c = await supabase.from('child_claims').select('*').eq('user_id', profile!.id).order('created_at', { ascending: false })
+    const c = await supabase.from('child_claims').select('id,child_name,child_ic_last4,class_id,relation,status,review_note,created_at').eq('user_id', profile!.id).order('created_at', { ascending: false })
     setClaims((c.data as Claim[]) ?? [])
     if (familyId) {
       const [s, g] = await Promise.all([
-        supabase.from('students').select('id,full_name,ic_no,classes(name)').eq('family_id', familyId).eq('status', 'aktif').order('full_name'),
+        supabase.from('students').select('id,full_name,ic_last4,classes(name)').eq('family_id', familyId).eq('status', 'aktif').order('full_name'),
         supabase.from('guardians').select('id,full_name,phone').eq('family_id', familyId),
       ])
       setKids((s.data as unknown as Child[]) ?? [])
@@ -78,7 +78,7 @@ export default function MyChildren() {
                 <span className="initials" style={{ background: t.solid }}>{initials(k.full_name)}</span>
                 <div style={{ minWidth: 0 }}>
                   <b translate="no">{k.full_name}</b>
-                  {k.ic_no && <div className="k">MyKid {maskIC(k.ic_no)}</div>}
+                  {k.ic_last4 && <div className="k">MyKid {maskLast4(k.ic_last4)}</div>}
                   {mobile && <span className="cls" translate="no">{k.classes?.name ?? '-'}</span>}
                 </div>
                 {!mobile && <span className="cls" translate="no">{k.classes?.name ?? '-'}</span>}

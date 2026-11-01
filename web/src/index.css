@@ -328,3 +328,13 @@ select { padding-left: .5rem; }
 .spouse-box { border: 1px solid var(--line); border-radius: 14px; padding: .8rem 1rem .9rem; margin: 0 0 .9rem; background: var(--bg); }
 .spouse-box legend { font-weight: 700; font-size: .85rem; padding: 0 .4rem; }
 .spouse-box p { margin: 0 0 .7rem; }
+
+/* ---- privacy notice (PDPA) ---- */
+.privacy { max-width: 72ch; }
+.privacy h3 { font-size: 1rem; margin: 1.2rem 0 .3rem; color: var(--brand-dark); }
+.privacy p { margin: .3rem 0; }
+.privacy-page { max-width: 820px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+.privacy-page h1 { margin: 1rem 0 0; }
+.privacy-page > .muted { margin: .2rem 0 1rem; }
+.privacy-top { display: flex; align-items: center; justify-content: space-between; }
+.privacy-top .logo { height: 56px; }

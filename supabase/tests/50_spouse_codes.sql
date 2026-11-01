@@ -31,7 +31,7 @@ select (select family_id from guardians where user_id='00000000-0000-0000-0000-0
      = (select family_id from guardians where user_id='00000000-0000-0000-0000-0000000000b1') as husband_account_in_same_family;
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-0000000000b2',false);
 set role authenticated;
-select count(*) = 1 as husband_sees_child from students where ic_no = '190303106003';
+select count(*) = 1 as husband_sees_child from students where ic_last4 = '6003';
 reset role;
 
 -- ===== B. spouse who registers AFTER being named is linked at sign-up =====
