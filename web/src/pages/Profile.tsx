@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { supabase, check } from '../lib/supabase'
 import { useAuth, useRole } from '../lib/auth'
 import SpouseCard from '../components/SpouseCard'
@@ -12,11 +12,17 @@ export default function Profile() {
   const [f, setF] = useState({ full_name: profile?.full_name ?? '', phone: profile?.phone ?? '', ic_no: profile?.ic_no ?? '' })
   const [pw, setPw] = useState('')
   const { hasFamily } = useRole()
+  // verified parents can't change their own IC (migration 013); before 013 is run, fall back to being linked to a family
+  const { familyId } = useAuth()
+  const [locked, setLocked] = useState(false)
+  useEffect(() => {
+    supabase.rpc('my_ic_locked').then(({ data, error }) => setLocked(error ? Boolean(familyId) : Boolean(data)))
+  }, [familyId])
   const { busy, run } = useAction()
 
   const save = (e: FormEvent) => { e.preventDefault(); run(async () => {
-    if (!validIC(f.ic_no)) throw new Error('No. Kad Pengenalan wajib diisi (12 digit).')
-    check(await supabase.from('profiles').update({ full_name: f.full_name.trim(), phone: f.phone.trim(), ic_no: normIC(f.ic_no) || null }).eq('id', profile!.id))
+    if (!locked && !validIC(f.ic_no)) throw new Error('No. Kad Pengenalan wajib diisi (12 digit).')
+    check(await supabase.from('profiles').update({ full_name: f.full_name.trim(), phone: f.phone.trim(), ...(locked ? {} : { ic_no: normIC(f.ic_no) || null }) }).eq('id', profile!.id))
     await refresh()
   }, 'Profil dikemas kini.') }
 
@@ -34,8 +40,9 @@ export default function Profile() {
         <Card title="Maklumat peribadi">
           <form className="form" onSubmit={save}>
             <Field label="Nama penuh"><input required value={f.full_name} onChange={(e) => setF({ ...f, full_name: e.target.value })} /></Field>
-            <Field label="No. Kad Pengenalan" hint="Selepas disahkan oleh guru kelas, pindaan perlu melalui pentadbir.">
-              <input required value={f.ic_no} onChange={(e) => setF({ ...f, ic_no: e.target.value })} inputMode="numeric" />
+            <Field label="No. Kad Pengenalan" hint={locked ? 'Telah disahkan. Hubungi pentadbir untuk pindaan.' : 'Selepas disahkan oleh guru kelas, pindaan perlu melalui pentadbir.'}>
+              <input required value={f.ic_no} onChange={(e) => setF({ ...f, ic_no: e.target.value })} inputMode="numeric"
+                readOnly={locked} aria-readonly={locked} className={locked ? 'locked' : undefined} />
             </Field>
             <Field label="Telefon"><input value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} /></Field>
             <button className="btn primary" disabled={busy}>Simpan</button>

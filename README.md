@@ -45,6 +45,7 @@ You need a free [Supabase](https://supabase.com) account (database + login + fil
 10. Then `010_access.sql` → **Run**. Adds the Bendahari PIBG role, **Tetapan → Akses pengguna** (the administrator decides what each role may change) and the **Laporan** page. Afterwards, in **Pengguna & Kelas**, change your treasurer's role to *Bendahari PIBG* (AJK PIBG no longer approves payments by default).
 11. Then `011_spouse_codes.sql` → **Run**. Links spouses' accounts and joins their family records, renumbers family codes without gaps (K00001, K00002, …), and stores the payment date read from the bank receipt.
 12. Then `012_language.sql` → **Run**. Lets each user choose Bahasa Melayu or English (Profil, the BM | EN switch in the menu, or on the sign-in page).
+13. Then `013_ic_lock.sql` → **Run**. Once a parent is verified, only the administrator can change their IC number (Pengguna & Kelas → No. KP → Ubah); their family record is updated with it.
 
 ### 2. Configure sign-in e-mails (important)
 Supabase's built-in e-mail sender only delivers to your own Supabase team members, and only 2 e-mails per hour. Parents would never receive their confirmation e-mail. Pick one option:
@@ -158,6 +159,8 @@ supabase/tests/40_access.sql                tests for 010
 supabase/migrations/011_spouse_codes.sql    spouse linking, gap-free family codes, payment date
 supabase/tests/50_spouse_codes.sql          tests for 011
 supabase/migrations/012_language.sql        display language per user
+supabase/migrations/013_ic_lock.sql         verified IC numbers locked to the administrator
+supabase/tests/60_ic_lock.sql               tests for 013
 web/src/lib/i18n/                           BM → English dictionary (en.ts) and the in-app translator
 web/scripts/receipt-date.test.mts           receipt date reader cases (npx tsx scripts/receipt-date.test.mts)
 supabase/tests/                      scenario tests (12 scenarios)
