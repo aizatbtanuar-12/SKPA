@@ -3,13 +3,13 @@ import { supabase, check } from '../../lib/supabase'
 import { useRole } from '../../lib/auth'
 import { PageHead } from '../../components/Layout'
 import { Badge, Card, Field, Modal, useAction } from '../../components/ui'
-import { claimLabel, claimTone, date, fmtIC, maskIC, relationLabel } from '../../lib/util'
+import { claimLabel, claimTone, date, maskLast4, relationLabel } from '../../lib/util'
 import { DataTable } from '../../components/DataTable'
 
 interface ClaimRow {
-  id: number; child_name: string; child_ic: string | null; class_id: number; relation: string
+  id: number; child_name: string; child_ic_last4: string | null; class_id: number; relation: string
   status: string; review_note: string | null; created_at: string
-  parent: { full_name: string; ic_no: string | null; phone: string | null } | null
+  parent: { full_name: string; ic_last4: string | null; phone: string | null } | null
   classes: { name: string } | null
 }
 interface Suggestion { student_id: number; full_name: string; class_name: string; ic_last4: string | null; score: number; reason: string }
@@ -24,7 +24,7 @@ export default function Verify() {
 
   const load = useCallback(async () => {
     let q = supabase.from('child_claims')
-      .select('*, parent:profiles!child_claims_user_id_fkey(full_name,ic_no,phone), classes(name)')
+      .select('id,child_name,child_ic_last4,class_id,relation,status,review_note,created_at,user_id, parent:profiles!child_claims_user_id_fkey(full_name,ic_last4,phone), classes(name)')
       .order('created_at', { ascending: filter === 'menunggu' })
     if (filter === 'menunggu') q = q.eq('status', 'menunggu')
     const { data } = await q.limit(300)
@@ -54,7 +54,7 @@ export default function Verify() {
           initialSort={{ key: 'tarikh', dir: filter === 'menunggu' ? 'asc' : 'desc' }}
           empty={filter === 'menunggu' ? 'Tiada permohonan menunggu. 🎉' : 'Tiada rekod.'}
           cols={[
-            { key: 'nama', label: 'Nama anak', sort: (r) => r.child_name, render: (r) => <><strong>{r.child_name}</strong>{r.child_ic && <div className="muted small">MyKid {fmtIC(r.child_ic)}</div>}</> },
+            { key: 'nama', label: 'Nama anak', sort: (r) => r.child_name, render: (r) => <><strong>{r.child_name}</strong>{r.child_ic_last4 && <div className="muted small">MyKid {maskLast4(r.child_ic_last4)}</div>}</> },
             { key: 'kelas', label: 'Kelas', sort: (r) => r.classes?.name, render: (r) => r.classes?.name },
             { key: 'ibubapa', label: 'Ibu bapa', sort: (r) => r.parent?.full_name, render: (r) => <>{r.parent?.full_name}<div className="muted small">{relationLabel[r.relation]} · {r.parent?.phone || '-'}</div></> },
             { key: 'tarikh', label: 'Tarikh', sort: (r) => r.created_at, render: (r) => date(r.created_at) },
@@ -99,7 +99,7 @@ function ReviewModal({ claim, onClose, onDone }: { claim: ClaimRow; onClose: () 
       <dl className="dl">
         <dt>Kelas dipilih</dt><dd>{claim.classes?.name}</dd>
         <dt>Ibu bapa</dt><dd>{claim.parent?.full_name} ({relationLabel[claim.relation]})</dd>
-        <dt>No. KP ibu bapa</dt><dd>{maskIC(claim.parent?.ic_no)}</dd>
+        <dt>No. KP ibu bapa</dt><dd>{maskLast4(claim.parent?.ic_last4)}</dd>
         <dt>Telefon</dt><dd>{claim.parent?.phone || '-'}</dd>
       </dl>
       <h3 className="h3">Padankan dengan rekod murid</h3>

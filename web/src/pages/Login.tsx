@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { useState, type FormEvent } from 'react'
 import { supabase } from '../lib/supabase'
 import { normIC, validIC, errMsg } from '../lib/util'
@@ -133,6 +134,7 @@ export default function Login() {
             </span>
           </label>
         )}
+        {mode === 'daftar' && <p className="small"><Link to="/privasi">Baca notis privasi</Link></p>}
 
         {msg && <div className={`alert ${msg.tone}`}>{msg.text}</div>}
 

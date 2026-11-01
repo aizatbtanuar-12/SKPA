@@ -3,18 +3,19 @@ import { supabase, check } from '../../lib/supabase'
 import { useAuth } from '../../lib/auth'
 import { PageHead } from '../../components/Layout'
 import { Badge, Card, Field, Modal, useAction } from '../../components/ui'
-import { fmtIC, normIC, relationLabel, validIC } from '../../lib/util'
+import { maskLast4, normIC, relationLabel, validIC } from '../../lib/util'
 import { DataTable } from '../../components/DataTable'
 
-interface Guardian { id: number; full_name: string; ic_no: string | null; phone: string | null; user_id: string | null; family_id: number | null }
+interface Guardian { id: number; full_name: string; ic_last4: string | null; phone: string | null; user_id: string | null; family_id: number | null }
 interface Student {
-  id: number; full_name: string; ic_no: string | null; class_id: number | null; status: string; source: string
+  id: number; full_name: string; ic_last4: string | null; class_id: number | null; status: string; source: string
   family_id: number
   families: { family_code: string } | null
   student_guardians: { relation: string; guardians: Guardian }[]
 }
 
-const SELECT = 'id,full_name,ic_no,class_id,status,source,family_id,families(family_code),student_guardians(relation,guardians(id,full_name,ic_no,phone,user_id,family_id))'
+// full IC numbers are not sent to the browser (migration 014): last 4 digits only
+const SELECT = 'id,full_name,ic_last4,class_id,status,source,family_id,families(family_code),student_guardians(relation,guardians(id,full_name,ic_last4,phone,user_id,family_id))'
 
 export default function Records() {
   const { classes } = useAuth()
@@ -31,7 +32,12 @@ export default function Records() {
     if (q.trim()) {
       const t = q.trim().replace(/[,()%*]/g, ' ')
       const ic = normIC(t)
-      query = ic.length >= 4 ? query.or(`full_name.ilike.%${t}%,ic_no.like.%${ic}%`) : query.ilike('full_name', `%${t}%`)
+      if (ic.length === 12) {
+        // a full MyKid / parent IC: matched on the server, the number itself is never sent back
+        const { data: ids } = await supabase.rpc('students_with_ic', { p_ic: ic })
+        query = query.in('id', ((ids as number[] | null) ?? []).length ? (ids as number[]) : [-1])
+      } else if (ic.length === 4 && /^\d+$/.test(t)) query = query.eq('ic_last4', ic)
+      else query = query.ilike('full_name', `%${t}%`)
     }
     const { data } = await query
     setRows((data as unknown as Student[]) ?? [])
@@ -46,7 +52,7 @@ export default function Records() {
       <PageHead title="Rekod Murid & Keluarga" sub="Murid dengan No. KP ibu/bapa yang sama digabungkan sebagai satu keluarga secara automatik."
         actions={<button className="btn primary" onClick={() => setEdit('new')}>+ Murid baru</button>} />
       <div className="filters">
-        <input placeholder="Cari nama atau No. MyKid…" value={q} onChange={(e) => setQ(e.target.value)} />
+        <input placeholder="Cari nama, No. MyKid / No. KP penuh, atau 4 digit akhir…" value={q} onChange={(e) => setQ(e.target.value)} />
         <select value={cls} onChange={(e) => setCls(e.target.value)}>
           <option value="">Semua kelas</option>
           {classes.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -59,13 +65,13 @@ export default function Records() {
         <DataTable rows={rows} rowKey={(s) => s.id} pageSize={20} resetKey={rows} onRowClick={(s) => setEdit(s)}
           initialSort={{ key: 'nama', dir: 'asc' }} empty="Tiada rekod. Import senarai murid atau tambah secara manual."
           cols={[
-            { key: 'nama', label: 'Nama murid', sort: (s) => s.full_name, render: (s) => <><strong>{s.full_name}</strong><div className="muted small">{fmtIC(s.ic_no)}</div></> },
+            { key: 'nama', label: 'Nama murid', sort: (s) => s.full_name, render: (s) => <><strong>{s.full_name}</strong><div className="muted small">{maskLast4(s.ic_last4)}</div></> },
             { key: 'kelas', label: 'Kelas', sort: (s) => className(s.class_id), render: (s) => <>{className(s.class_id)}{s.status === 'keluar' && <> <Badge tone="grey">Telah keluar</Badge></>}</> },
             { key: 'penjaga', label: 'Ibu bapa / penjaga', sort: (s) => s.student_guardians[0]?.guardians.full_name, render: (s) => (
               s.student_guardians.length ? s.student_guardians.map((g) => (
                 <div key={g.guardians.id} className="small">
                   {g.guardians.full_name} <span className="muted">({relationLabel[g.relation]})</span>
-                  {!g.guardians.ic_no && <Badge tone="amber">tiada No. KP</Badge>}
+                  {!g.guardians.ic_last4 && <Badge tone="amber">tiada No. KP</Badge>}
                 </div>
               )) : <Badge tone="amber">Tiada penjaga</Badge>) },
             { key: 'kod', label: 'Keluarga', sort: (s) => s.families?.family_code, className: 'mono', render: (s) => s.families?.family_code },
@@ -80,13 +86,19 @@ export default function Records() {
 function StudentModal({ student, onClose, onSaved }: { student: Student | null; onClose: () => void; onSaved: () => void }) {
   const { classes, profile } = useAuth()
   const [s, setS] = useState({
-    full_name: student?.full_name ?? '', ic_no: student?.ic_no ?? '',
+    full_name: student?.full_name ?? '', ic_no: '',
     class_id: student?.class_id ? String(student.class_id) : '', status: student?.status ?? 'aktif',
   })
   const [g, setG] = useState({ full_name: '', ic_no: '', phone: '', relation: 'bapa' })
   const [mergeCode, setMergeCode] = useState('')
   const [siblings, setSiblings] = useState<{ id: number; full_name: string; class_id: number | null }[]>([])
   const { busy, run } = useAction()
+
+  // the full MyKid is fetched only for the record being edited, and the look-up is logged
+  useEffect(() => {
+    if (!student) return
+    supabase.rpc('reveal_ic', { p_kind: 'student', p_id: String(student.id) }).then(({ data }) => setS((x) => ({ ...x, ic_no: (data as string | null) ?? '' })))
+  }, [student])
 
   useEffect(() => {
     if (!student) return
@@ -106,16 +118,7 @@ function StudentModal({ student, onClose, onSaved }: { student: Student | null; 
     if (!student) return
     const ic = normIC(g.ic_no)
     if (!validIC(ic)) throw new Error('No. KP ibu bapa / penjaga wajib diisi (12 digit).')
-    let gid: number | null = null
-    if (ic) {
-      const { data } = await supabase.from('guardians').select('id').eq('ic_no', ic).maybeSingle()
-      gid = (data as { id: number } | null)?.id ?? null
-    }
-    if (!gid) {
-      const ins = await supabase.from('guardians').insert({ full_name: g.full_name.trim(), ic_no: ic, phone: g.phone.trim() || null }).select('id').single()
-      gid = (check(ins) as { id: number }).id
-    }
-    check(await supabase.from('student_guardians').insert({ student_id: student.id, guardian_id: gid, relation: g.relation }))
+    check(await supabase.rpc('staff_link_guardian', { p_student: student.id, p_name: g.full_name.trim(), p_ic: ic, p_phone: g.phone.trim(), p_relation: g.relation }))
     onSaved()
   }, 'Penjaga ditambah. Keluarga dikemas kini.') }
 
@@ -164,7 +167,7 @@ function StudentModal({ student, onClose, onSaved }: { student: Student | null; 
               <li key={x.guardians.id}>
                 <div>
                   <strong>{x.guardians.full_name}</strong> <span className="muted">({relationLabel[x.relation]})</span>
-                  <div className="muted small">KP {fmtIC(x.guardians.ic_no)} · {x.guardians.phone || '-'} {x.guardians.user_id && '· ada akaun portal'}</div>
+                  <div className="muted small">KP {maskLast4(x.guardians.ic_last4)} · {x.guardians.phone || '-'} {x.guardians.user_id && '· ada akaun portal'}</div>
                 </div>
                 <button className="btn ghost small" onClick={() => unlink(x.guardians.id)} disabled={busy}>Buang</button>
               </li>

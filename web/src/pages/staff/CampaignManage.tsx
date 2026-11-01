@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { supabase, check } from '../../lib/supabase'
 import { DataTable } from '../../components/DataTable'
@@ -108,7 +108,7 @@ export default function CampaignManage() {
         </div>
       </div>
 
-      {tab === 'kelas' ? <ByClass rows={rows} /> : (
+      {tab === 'kelas' ? <ByClass campaignId={c.id} /> : (
         <Card>
           <DataTable rows={listed} rowKey={(r) => r.id} pageSize={PAGE} resetKey={tab}
             initialSort={{ key: 'dihantar', dir: tab === 'semak' ? 'asc' : 'desc' }}
@@ -142,7 +142,7 @@ function Review({ d, onClose, onDone }: { d: Row; onClose: () => void; onDone: (
   const { busy, run } = useAction()
 
   useEffect(() => {
-    if (d.proof_path) supabase.storage.from('bukti-bayaran').createSignedUrl(d.proof_path, 600).then(({ data }) => setUrl(data?.signedUrl ?? null))
+    if (d.proof_path) supabase.storage.from('bukti-bayaran').createSignedUrl(d.proof_path, 120).then(({ data }) => setUrl(data?.signedUrl ?? null))
     if (d.reference) supabase.rpc('reference_usage', { p_reference: d.reference, p_exclude_kind: 'sumbangan', p_exclude_id: d.id })
       .then(({ data }) => setUsage((data as Usage[]) ?? []))
   }, [d])
@@ -226,26 +226,16 @@ function RecordDonation({ campaign, onClose, onDone }: { campaign: Campaign; onC
 }
 
 /** Participation per class: families with a child in the class who donated (approved) */
-function ByClass({ rows }: { rows: Row[] }) {
-  const { classes } = useAuth()
-  const [students, setStudents] = useState<{ family_id: number; class_id: number | null }[] | null>(null)
+// totals from the server (campaign_by_class), so managing a drive needs no access to family records
+function ByClass({ campaignId }: { campaignId: number }) {
+  const [table, setTable] = useState<{ name: string; total: number; donated: number; amount: number }[] | null>(null)
   useEffect(() => {
-    supabase.from('students').select('family_id,class_id').eq('status', 'aktif').limit(5000)
-      .then(({ data }) => setStudents((data as { family_id: number; class_id: number | null }[]) ?? []))
-  }, [])
+    supabase.rpc('campaign_by_class', { p_campaign: campaignId }).then(({ data }) => setTable(
+      ((data as { class_name: string; families: number; donated: number; amount: number }[] | null) ?? [])
+        .map((r) => ({ name: r.class_name, total: Number(r.families), donated: Number(r.donated), amount: Number(r.amount) }))))
+  }, [campaignId])
 
-  const table = useMemo(() => {
-    if (!students) return []
-    const paid = new Map<number, number>()
-    rows.filter((r) => r.status === 'diluluskan' && r.family_id).forEach((r) => paid.set(r.family_id!, (paid.get(r.family_id!) ?? 0) + Number(r.amount)))
-    return classes.map((c) => {
-      const fams = new Set(students.filter((s) => s.class_id === c.id).map((s) => s.family_id))
-      const donated = [...fams].filter((f) => paid.has(f))
-      return { name: c.name, total: fams.size, donated: donated.length, amount: donated.reduce((a, f) => a + (paid.get(f) ?? 0), 0) }
-    }).filter((r) => r.total > 0).sort((a, b) => b.donated / b.total - a.donated / a.total)
-  }, [students, rows, classes])
-
-  if (!students) return <Spinner />
+  if (!table) return <Spinner />
   return (
     <Card>
       <DataTable rows={table} rowKey={(r) => r.name} pageSize={15} initialSort={{ key: 'sertai', dir: 'desc' }} empty="Tiada data kelas."

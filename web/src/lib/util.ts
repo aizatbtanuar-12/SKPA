@@ -17,6 +17,9 @@ export const fmtIC = (v: string | null | undefined) =>
 /** today as YYYY-MM-DD in the user's own time zone */
 export const todayISO = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}` }
 
+/** display an IC from its last 4 digits (full numbers are not sent to the browser) */
+export const maskLast4 = (l4: string | null | undefined) => (l4 ? `••••••-••-${l4}` : '-')
+
 export const validIC = (v: string) => /^\d{12}$/.test(normIC(v))
 
 export const roleLabel: Record<Role, string> = {

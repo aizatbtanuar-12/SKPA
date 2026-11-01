@@ -21,7 +21,7 @@ begin execute q; get diagnostics n = row_count; return n; end $$;
 -- ===== A. AJK PIBG: can view, can't change records / fees / settings / import / verify =====
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-0000000000a1',false);
 set role authenticated;
-select is_staff() as ajk_can_view, (select count(*) > 0 from students) as ajk_sees_students;
+select is_staff() as ajk_is_committee, (select count(*) = 0 from students) and (select count(*) = 0 from guardians) as ajk_cannot_read_family_records;
 select pg_temp.changed($q$update students set full_name = full_name || ' X' where true$q$) = 0 as ajk_cannot_edit_students;
 select pg_temp.changed($q$update school_settings set fee_per_family = 1 where id = 1$q$) = 0 as ajk_cannot_edit_settings;
 select pg_temp.refused($q$select import_students('[{"nama_murid":"Z","ic_murid":"190101100001","kelas":"1 A","ic_bapa":"800000000001","nama_bapa":"Z"}]')$q$) as ajk_cannot_import;

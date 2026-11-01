@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabase'
 import { useAuth, useRole } from '../../lib/auth'
 import { Seg } from '../../components/pui'
 import AccessSettings from './AccessSettings'
+import AuditLog from './AuditLog'
 import { PageHead } from '../../components/Layout'
 import { Card, Field, useAction } from '../../components/ui'
 import ReceiptDoc, { SAMPLE_RECEIPT } from '../../components/ReceiptDoc'
@@ -118,16 +119,19 @@ function GeneralSettings() {
 /** Tetapan: "Umum" for those allowed to change settings, "Akses pengguna" for the administrator only. */
 export default function Settings() {
   const r = useRole()
-  const tabs: ['umum' | 'akses', string][] = [
-    ...(r.can('tetapan') ? [['umum', 'Umum'] as ['umum', string]] : []),
-    ...(r.isAdmin ? [['akses', 'Akses pengguna'] as ['akses', string]] : []),
+  type Tab = 'umum' | 'akses' | 'audit'
+  const tabs: [Tab, string][] = [
+    ...(r.can('tetapan') ? [['umum', 'Umum'] as [Tab, string]] : []),
+    ...(r.isAdmin ? [['akses', 'Akses pengguna'] as [Tab, string], ['audit', 'Log audit'] as [Tab, string]] : []),
   ]
-  const [tab, setTab] = useState<'umum' | 'akses'>(tabs[0]?.[0] ?? 'umum')
+  const [tab, setTab] = useState<Tab>(tabs[0]?.[0] ?? 'umum')
+  const sub = tab === 'akses' ? 'Tentukan apa yang boleh diubah oleh setiap peranan pengguna.'
+    : tab === 'audit' ? 'Siapa melakukan apa ke atas data peribadi.' : 'Sekolah, yuran, akaun bank dan format resit.'
   return (
     <>
-      <PageHead title="Tetapan" sub={tab === 'akses' ? 'Tentukan apa yang boleh diubah oleh setiap peranan pengguna.' : 'Sekolah, yuran, akaun bank dan format resit.'} />
+      <PageHead title="Tetapan" sub={sub} />
       {tabs.length > 1 && <Seg value={tab} onChange={setTab} options={tabs} />}
-      {tab === 'akses' && r.isAdmin ? <AccessSettings /> : <GeneralSettings />}
+      {tab === 'akses' && r.isAdmin ? <AccessSettings /> : tab === 'audit' && r.isAdmin ? <AuditLog /> : <GeneralSettings />}
     </>
   )
 }

@@ -15,7 +15,7 @@ reset role;
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-00000000000b',false);
 set role authenticated;
 select pg_temp.refused($q$update profiles set ic_no = '800101109999' where id = '00000000-0000-0000-0000-0000000000e1'$q$)
-    or (select ic_no from profiles where id = '00000000-0000-0000-0000-0000000000e1') = '800101101111' as chairman_cannot_change_ic;
+    or (select ic_last4 from profiles where id = '00000000-0000-0000-0000-0000000000e1') = '1111' as chairman_cannot_change_ic;
 reset role;
 -- the administrator can, and the family record follows
 select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-00000000000a',false);
@@ -34,6 +34,6 @@ select set_config('request.jwt.claim.sub','00000000-0000-0000-0000-0000000000f3'
 set role authenticated;
 select not my_ic_locked() as outsider_not_locked;
 update profiles set ic_no = '790909107778' where id = auth.uid();
-select ic_no = '790909107778' as unverified_can_fix_ic from profiles where id = auth.uid();
+select ic_no = '790909107778' as unverified_can_fix_ic from my_ic();
 reset role;
 select 'IC LOCK TESTS PASSED' as result;

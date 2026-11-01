@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/auth'
-import { maskIC, normIC, relationLabel, validIC } from '../lib/util'
+import { maskLast4, normIC, relationLabel, validIC } from '../lib/util'
 import { Card, Field, useAction, useToast } from './ui'
 
 /** The other parent of the children. Saved on the profile and attached to the family (save_spouse, migration 009). */
@@ -45,7 +45,7 @@ export default function SpouseCard({ onSaved }: { onSaved?: () => void }) {
           <dl className="dl" style={{ margin: 0 }}>
             <dt>Saya</dt><dd>{relationLabel[profile?.relation ?? 'penjaga']}</dd>
             <dt>{spouseWord}</dt><dd translate="no">{profile?.spouse_name}</dd>
-            <dt>No. KP</dt><dd className="mono">{maskIC(profile?.spouse_ic ?? null)}</dd>
+            <dt>No. KP</dt><dd className="mono">{maskLast4(profile?.spouse_ic_last4 ?? profile?.spouse_ic?.slice(-4))}</dd>
             {profile?.spouse_phone && <><dt>Telefon</dt><dd>{profile.spouse_phone}</dd></>}
           </dl>
         )

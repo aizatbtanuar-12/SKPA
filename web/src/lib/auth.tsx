@@ -20,6 +20,19 @@ interface AuthState {
 
 const Ctx = createContext<AuthState>(null as unknown as AuthState)
 
+// Full IC numbers are not readable from the profiles table (migration 014); your own come from my_ic().
+const PROFILE_COLS = 'id,full_name,phone,role,panitia,pdpa_consent_at,created_at,relation,spouse_name,spouse_phone,no_spouse,lang,ic_last4,spouse_ic_last4'
+async function readProfile(id: string) {
+  let p = await supabase.from('profiles').select(PROFILE_COLS).eq('id', id).maybeSingle<Profile>()
+  if (p.error && /ic_last4|column/.test(p.error.message)) p = await supabase.from('profiles').select('*').eq('id', id).maybeSingle<Profile>() // before 014
+  if (!p.error && p.data) {
+    const ic = await supabase.rpc('my_ic')
+    const row = (ic.data as { ic_no: string | null; spouse_ic: string | null }[] | null)?.[0]
+    if (row) Object.assign(p.data as object, { ic_no: row.ic_no, spouse_ic: row.spouse_ic })
+  }
+  return p
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
@@ -37,11 +50,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return
     }
     try {
-      let p = await supabase.from('profiles').select('*').eq('id', s.user.id).maybeSingle()
+      let p = await readProfile(s.user.id)
       if (!p.error && !p.data) {
         // account created before the database was set up: create its profile now
         await supabase.rpc('ensure_my_profile')
-        p = await supabase.from('profiles').select('*').eq('id', s.user.id).maybeSingle()
+        p = await readProfile(s.user.id)
       }
       const [st, cl, fam] = await Promise.all([
         supabase.from('school_settings').select('*').eq('id', 1).maybeSingle(),
