@@ -24,7 +24,9 @@ const cmp = (a: SortVal, b: SortVal, dir: 1 | -1) => {
  * Table with clickable sort headers and pagination. Used by every table in the app.
  * `resetKey` (e.g. the active filter) sends the user back to page 1.
  */
-export function DataTable<T>({ rows, cols, rowKey, pageSize = 10, initialSort, empty = 'Tiada rekod.', resetKey, onRowClick, rowClassName }: {
+const SIZES = [10, 20, 50, 100]
+
+export function DataTable<T>({ rows, cols, rowKey, pageSize = 10, initialSort, empty = 'Tiada rekod.', resetKey, onRowClick, rowClassName, storeKey }: {
   rows: T[]
   cols: Col<T>[]
   rowKey: (r: T) => string | number
@@ -34,9 +36,17 @@ export function DataTable<T>({ rows, cols, rowKey, pageSize = 10, initialSort, e
   resetKey?: unknown
   onRowClick?: (r: T) => void
   rowClassName?: (r: T) => string
+  /** remembers the chosen rows per page on this device; defaults to the page + column names */
+  storeKey?: string
 }) {
   const [sort, setSort] = useState(initialSort ?? null)
   const [page, setPage] = useState(0)
+  const key = 'pibg.rows.' + (storeKey ?? (typeof location !== 'undefined' ? location.hash.split('?')[0] : '') + ':' + cols.map((c) => c.key).join(','))
+  const [size, setSizeState] = useState<number>(() => {
+    try { const v = Number(localStorage.getItem(key)); return SIZES.includes(v) ? v : pageSize } catch { return pageSize }
+  })
+  const setSize = (n: number) => { setSizeState(n); setPage(0); try { localStorage.setItem(key, String(n)) } catch { /* private mode */ } }
+  const sizes = [...new Set([...SIZES, pageSize])].sort((a, b) => a - b)
 
   const sorted = useMemo(() => {
     const col = sort && cols.find((c) => c.key === sort.key)
@@ -46,10 +56,10 @@ export function DataTable<T>({ rows, cols, rowKey, pageSize = 10, initialSort, e
     return [...rows].sort((a, b) => cmp(f(a), f(b), dir))
   }, [rows, cols, sort])
 
-  const pages = Math.max(1, Math.ceil(sorted.length / pageSize))
+  const pages = Math.max(1, Math.ceil(sorted.length / size))
   useEffect(() => { setPage(0) }, [resetKey, sort])
   useEffect(() => { if (page > pages - 1) setPage(pages - 1) }, [page, pages])
-  const slice = sorted.slice(page * pageSize, page * pageSize + pageSize)
+  const slice = sorted.slice(page * size, page * size + size)
 
   const toggle = (c: Col<T>) => {
     if (!c.sort) return
@@ -58,8 +68,8 @@ export function DataTable<T>({ rows, cols, rowKey, pageSize = 10, initialSort, e
 
   if (!rows.length) return <Empty>{empty}</Empty>
 
-  const from = page * pageSize + 1
-  const to = Math.min(sorted.length, from + pageSize - 1)
+  const from = page * size + 1
+  const to = Math.min(sorted.length, from + size - 1)
   return (
     <div className="dt">
       <div className="dt-scroll">
@@ -92,7 +102,15 @@ export function DataTable<T>({ rows, cols, rowKey, pageSize = 10, initialSort, e
         </table>
       </div>
       <div className="dt-foot">
-        <span className="dt-count">{sorted.length > pageSize ? `${from}–${to} daripada ${sorted.length}` : `${sorted.length} rekod`}</span>
+        <div className="dt-left">
+          <span className="dt-count">{sorted.length > size ? `${from}–${to} daripada ${sorted.length}` : `${sorted.length} rekod`}</span>
+          <label className="dt-size">
+            <span>Baris</span>
+            <select value={size} onChange={(e) => setSize(Number(e.target.value))} aria-label="Baris setiap halaman">
+              {sizes.map((n) => <option key={n} value={n}>{n}</option>)}
+            </select>
+          </label>
+        </div>
         {pages > 1 && (
           <div className="dt-pager">
             <button type="button" className="txt" disabled={page === 0} onClick={() => setPage(page - 1)}>‹ Sebelum</button>

@@ -4,6 +4,7 @@ import { useAuth } from '../../lib/auth'
 import { PageHead } from '../../components/Layout'
 import { Card, Field, Modal, useAction } from '../../components/ui'
 import { DataTable } from '../../components/DataTable'
+import { Seg } from '../../components/pui'
 import { LEVELS, date, levelLabel, maskIC, normIC, roleLabel, validIC } from '../../lib/util'
 
 type P = Profile & { created_at: string }
@@ -23,12 +24,15 @@ export default function Users() {
     setClasses((c.data as ClassRow[]) ?? [])
   }, [])
   useEffect(() => { load() }, [load])
+  const [tab, setTab] = useState<'kelas' | 'pengguna'>('kelas')
 
   return (
     <>
       <PageHead title="Pengguna & Kelas" sub="Guru dan AJK mendaftar sendiri sebagai pengguna, kemudian pentadbir menetapkan peranan mereka di sini." />
-      <ClassesCard classes={classes} users={users} reload={load} />
-      <UsersCard users={users} reload={load} />
+      <Seg value={tab} onChange={setTab} options={[['kelas', `Kelas (${classes.length})`], ['pengguna', `Pengguna (${users.length})`]]} />
+      {tab === 'kelas'
+        ? <ClassesCard classes={classes} users={users} reload={load} />
+        : <UsersCard users={users} reload={load} />}
     </>
   )
 }
